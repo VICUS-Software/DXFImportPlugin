@@ -61,12 +61,12 @@ MOC_DIR = moc
 UI_DIR = ui
 
 SOURCES += \
-	../../src/IFCImportPlugin.cpp 
+	../../src/DXFImportPlugin.cpp 
 
 HEADERS += \
 	../../src/SVCommonPluginInterface.h \
 	../../src/SVImportPluginInterface.h \
-	../../src/IFCImportPlugin.h \
+	../../src/DXFImportPlugin.h \
 
 QMAKE_LIBDIR += ../../../../externals/lib$${DIR_PREFIX}
 
@@ -92,5 +92,5 @@ win32-msvc* {
 # !isEmpty(target.path): INSTALLS += target
 
 
-TRANSLATIONS += ../../resources/translations/ImportIFCPlugin_de.ts
+TRANSLATIONS += ../../resources/translations/DXFImportPlugin_de.ts
 CODECFORSRC = UTF-8
