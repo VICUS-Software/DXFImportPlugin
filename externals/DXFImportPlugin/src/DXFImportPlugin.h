@@ -3,14 +3,12 @@
 
 #include <SVImportPluginInterface.h>
 
-#include "ImportIFCMessageHandler.h"
-
-#define IFCImportPlugin_iid "de.dresden-tu.arch.ibk.IFCImportPlugin/1.0"
+#define DXFImportPlugin_iid "de.dresden-tu.arch.ibk.DXFImportPlugin/1.0"
 
 class IFCImportPlugin : public QObject, public SVImportPluginInterface
 {
 	Q_OBJECT
-	Q_PLUGIN_METADATA(IID IFCImportPlugin_iid FILE "metadata.json")
+	Q_PLUGIN_METADATA(IID DXFImportPlugin_iid FILE "metadata.json")
 	Q_INTERFACES(SVImportPluginInterface)
 
 public:
@@ -22,7 +20,6 @@ public:
 	QString IFCFileName() const;
 
 private:
-	ImportIFCMessageHandler m_msgHandler;
 	QString					m_ifcFileName;
 };
 
