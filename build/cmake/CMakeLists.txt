@@ -1,7 +1,7 @@
-# CMakeLists.txt file for IFC2BESTest and dependent libraries
+# CMakeLists.txt file for DXFImportPlugin and dependent libraries
 
 # The project name
-project( IFC2BESTest )
+project( DXFImportPlugin )
 
 # Require a fairly recent cmake version
 cmake_minimum_required( VERSION 2.8...3.10 )
@@ -108,7 +108,10 @@ include( ../../externals/IBK/projects/cmake_local/cmake_pri/CMakeLists.txt  )
 # add subdirectories for all builds
 add_subdirectory( ../../externals/IBK/projects/cmake_local IBK )
 add_subdirectory( ../../externals/IBKMK/projects/cmake_local IBKMK )
-add_subdirectory( ../../externals/ifcplusplus/projects/cmake_local ifcplusplus )
+add_subdirectory( ../../externals/libdxfrw/projects/cmake_local libdxfrw )
+add_subdirectory( ../../externals/QtExt/projects/cmake_local QtExt )
+add_subdirectory( ../../externals/TiCPP/projects/cmake_local TiCPP )
+
 
 # -------------------------------------------------------------
 # applications
