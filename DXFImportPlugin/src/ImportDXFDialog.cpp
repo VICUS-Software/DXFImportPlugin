@@ -1,11 +1,14 @@
 #include "ImportDXFDialog.h"
 #include "ui_ImportDXFDialog.h"
 
-#include "Utilities.h"
-
 #include <QMessageBox>
 
+#include <regex>
+
 #include <IBK_physics.h>
+#include <IBK_messages.h>
+
+#include <IBKMK_3DCalculations.h>
 
 #include <libdxfrw.h>
 
@@ -17,17 +20,20 @@ ImportDXFDialog::ImportDXFDialog(QWidget *parent) :
 {
 	m_ui->setupUi(this);
 
+	resize(1500, 800);
 
 	QString defaultName = tr("Drawing");
 
 	m_ui->lineEditDrawingName->setText(defaultName);
 
+	m_ui->comboBoxUnit->addItem("Auto", SU_Auto);
 	m_ui->comboBoxUnit->addItem("Meter", SU_Meter);
 	m_ui->comboBoxUnit->addItem("Decimeter", SU_Decimeter);
 	m_ui->comboBoxUnit->addItem("Centimeter", SU_Centimeter);
 	m_ui->comboBoxUnit->addItem("Millimeter", SU_Millimeter);
-}
 
+	m_ui->checkBoxFixFonts->setHidden(true);
+}
 
 ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname) {
 
@@ -70,16 +76,21 @@ bool ImportDXFDialog::readDxfFile(Drawing &drawing, const QString &fname) {
 	return success;
 }
 
+void addPoints(IBKMK::Vector2D &center, Drawing::AbstractDrawingObject &object) {
+	for (const IBKMK::Vector2D &v2D : object.points2D()) {
+		center += v2D;
+	}
+	center /= 1 + object.points2D().size();
+}
+
+void movePoints(const IBKMK::Vector2D &center, Drawing::AbstractDrawingObject &object) {
+	for (const IBKMK::Vector2D &v2D : object.points2D()) {
+		const_cast<IBKMK::Vector2D &>(v2D) -= center;
+	}
+}
 
 void ImportDXFDialog::moveDrawings() {
-	IBKMK::Vector3D center;
-
-	std::vector<const Drawing *> drawings;
-	drawings.push_back(&m_drawing);
-
-	boundingBox(drawings, center, false);
-
-	m_drawing.m_origin = - 1.0 * center;
+	m_drawing.m_origin = - 1.0 * m_center /** m_drawing.m_scalingFactor*/;
 }
 
 void ImportDXFDialog::fixFonts() {
@@ -95,15 +106,95 @@ void ImportDXFDialog::fixFonts() {
 	}
 }
 
+
 const Drawing& ImportDXFDialog::drawing() const {
 	return m_drawing;
 }
+
+
+template <typename t>
+void drawingBoundingBox(const Drawing &d,
+						const std::vector<t> &drawingObjects,
+						IBKMK::Vector3D &upperValues,
+						IBKMK::Vector3D &lowerValues,
+						const IBKMK::Vector3D &offset = IBKMK::Vector3D(0,0,0),
+						const IBKMK::Vector3D &xAxis = IBKMK::Vector3D(1,0,0),
+						const IBKMK::Vector3D &yAxis = IBKMK::Vector3D(0,1,0),
+						const IBKMK::Vector3D &zAxis = IBKMK::Vector3D(0,0,1)) {
+	// FUNCID(Project::boundingBox);
+
+	// store selected surfaces
+	if (drawingObjects.empty())
+		return;
+
+	// process all drawings
+	for (const t &drawObj : drawingObjects) {
+		const DrawingLayer *dl = dynamic_cast<const DrawingLayer *>(drawObj.m_parentLayer);
+
+		Q_ASSERT(dl != nullptr);
+
+		if (!dl->m_visible)
+			continue;
+
+		const std::vector<IBKMK::Vector3D> &points = d.points3D(drawObj.points2D(), drawObj.m_zPosition, drawObj.m_trans);
+
+		for (const IBKMK::Vector3D &v : points) {
+
+			IBKMK::Vector3D vLocal, point;
+
+			IBKMK::lineToPointDistance(offset, xAxis, v, vLocal.m_x, point);
+			IBKMK::lineToPointDistance(offset, yAxis, v, vLocal.m_y, point);
+			IBKMK::lineToPointDistance(offset, zAxis, v, vLocal.m_z, point);
+
+			upperValues.m_x = std::max(upperValues.m_x, (double)vLocal.m_x);
+			upperValues.m_y = std::max(upperValues.m_y, (double)vLocal.m_y);
+			upperValues.m_z = std::max(upperValues.m_z, (double)vLocal.m_z);
+
+			lowerValues.m_x = std::min(lowerValues.m_x, (double)vLocal.m_x);
+			lowerValues.m_y = std::min(lowerValues.m_y, (double)vLocal.m_y);
+			lowerValues.m_z = std::min(lowerValues.m_z, (double)vLocal.m_z);
+		}
+	}
+}
+
+
+IBKMK::Vector3D ImportDXFDialog::boundingBox(const std::vector<const Drawing *> & drawings, IBKMK::Vector3D & center, bool transformPoints) {
+
+	IBKMK::Vector3D lowerValues(std::numeric_limits<double>::max(),
+								std::numeric_limits<double>::max(),
+								std::numeric_limits<double>::max());
+	IBKMK::Vector3D upperValues(std::numeric_limits<double>::lowest(),
+								std::numeric_limits<double>::lowest(),
+								std::numeric_limits<double>::lowest());
+
+
+	for (const Drawing *drawing : drawings) {
+		drawingBoundingBox<Drawing::Arc>(*drawing, drawing->m_arcs, upperValues, lowerValues);
+		drawingBoundingBox<Drawing::Circle>(*drawing, drawing->m_circles, upperValues, lowerValues);
+		drawingBoundingBox<Drawing::Ellipse>(*drawing, drawing->m_ellipses, upperValues, lowerValues);
+		drawingBoundingBox<Drawing::Line>(*drawing, drawing->m_lines, upperValues, lowerValues);
+		drawingBoundingBox<Drawing::PolyLine>(*drawing, drawing->m_polylines, upperValues, lowerValues);
+		drawingBoundingBox<Drawing::Point>(*drawing, drawing->m_points, upperValues, lowerValues);
+		drawingBoundingBox<Drawing::Solid>(*drawing, drawing->m_solids, upperValues, lowerValues);
+		drawingBoundingBox<Drawing::Text>(*drawing, drawing->m_texts, upperValues, lowerValues);
+		drawingBoundingBox<Drawing::LinearDimension>(*drawing, drawing->m_linearDimensions, upperValues, lowerValues);
+	}
+
+	// center point of bounding box
+	center = 0.5*(lowerValues+upperValues);
+	// difference between upper and lower values gives bounding box (dimensions of selected geometry)
+	return (upperValues-lowerValues);
+}
+
 
 void ImportDXFDialog::on_comboBoxUnit_activated(int index) {
 	m_ui->comboBoxUnit->setCurrentIndex(index);
 }
 
+
 void ImportDXFDialog::on_pushButtonConvert_clicked() {
+	FUNCID(ImportDXFDialog::on_pushButtonConvert_clicked);
+
 	QString log;
 	QFile fileName(m_filePath);
 	if (!fileName.exists()) {
@@ -113,58 +204,77 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 	bool success;
 	try {
-		m_nextId = 1; // separate ID space
-		m_drawing = Drawing();
-		m_drawing.m_id = m_nextId++;
+//		m_nextId = project().nextUnusedID(); // separate ID space
+//		m_drawing = Drawing();
+		m_drawing.m_id = 1;
 
 		success = readDxfFile(m_drawing, fileName.fileName());
-	} catch (IBK::Exception &ex) {
-		log += "Error in converting DXF-File. See Error below\n";
-		log += ex.what();
-		return;
-	}
+		m_drawing.generateInsertGeometries(m_nextId);
 
-	m_ui->pushButtonImport->setEnabled(success);
-	if (success) {
+		m_ui->pushButtonImport->setEnabled(success);
+
+		if (!success)
+			throw IBK::Exception(IBK::FormatString("Import of DXF-File was not successful!"), FUNC_ID);
 
 		// set name for drawing from lineEdit
 		m_drawing.m_displayName = m_ui->lineEditDrawingName->text();
 
 		log += "Import successful!\nThe following objects were imported:\n";
-		log += QString("Layers:\t%1\n").arg(m_drawing.m_drawingLayers.size());
-		log += QString("Lines:\t%1\n").arg(m_drawing.m_lines.size());
-		log += QString("Polylines:\t%1\n").arg(m_drawing.m_polylines.size());
-		log += QString("Lines:\t%1\n").arg(m_drawing.m_lines.size());
-		log += QString("Arcs:\t%1\n").arg(m_drawing.m_arcs.size());
-		log += QString("Circles:\t%1\n").arg(m_drawing.m_circles.size());
-		log += QString("Ellipses:\t%1\n").arg(m_drawing.m_ellipses.size());
-		log += QString("Points:\t%1\n").arg(m_drawing.m_points.size());
+		log += QString("---------------------------------------------------------\n");
+		log += QString("Layers:\t\t%1\n").arg(m_drawing.m_drawingLayers.size());
+		log += QString("Lines:\t\t%1\n").arg(m_drawing.m_lines.size());
+		log += QString("Polylines:\t\t%1\n").arg(m_drawing.m_polylines.size());
+		log += QString("Arcs:\t\t%1\n").arg(m_drawing.m_arcs.size());
+		log += QString("Circles:\t\t%1\n").arg(m_drawing.m_circles.size());
+		log += QString("Ellipses:\t\t%1\n").arg(m_drawing.m_ellipses.size());
+		log += QString("Points:\t\t%1\n").arg(m_drawing.m_points.size());
 		log += QString("Linear Dimensions:\t%1\n").arg(m_drawing.m_linearDimensions.size());
 		log += QString("Dimension Styles:\t%1\n").arg(m_drawing.m_dimensionStyles.size());
-		log += QString("Texts:\t%1\n").arg(m_drawing.m_texts.size());
-
-		// m_drawing.updatePointer();
-		m_drawing.updateParents();
+		log += QString("Inserts:\t\t%1\n").arg(m_drawing.m_inserts.size());
+		log += QString("Solids:\t\t%1\n").arg(m_drawing.m_solids.size());
+		log += QString("---------------------------------------------------------\n");
 
 		ScaleUnit su = (ScaleUnit)m_ui->comboBoxUnit->currentData().toInt();
 
-		double scalingFactor = 0.0;
+		double scalingFactor[NUM_SU] = {0.001, 1.0, 0.1, 0.01, 0.001};
 
-		switch (su) {
+		std::vector<const Drawing *> drawings;
+		drawings.push_back(&m_drawing);
 
-		case SU_Meter:		scalingFactor = 1;		break;
-		case SU_Decimeter:	scalingFactor = 0.1;	break;
-		case SU_Centimeter: scalingFactor = 0.01;	break;
-		case SU_Millimeter: scalingFactor = 0.001;	break;
+		IBKMK::Vector3D bounding = boundingBox(drawings, m_center, false);
 
-		case NUM_SU: break; // make compiler happy
+		// Drawing should be at least bigger than 150 m
+		double AUTO_SCALING_THRESHOLD = 1000;
+		if (su == SU_Auto) {
+			bool foundAutoScaling = false;
+			for (unsigned int i=1; i<NUM_SU; ++i) {
 
+				if (scalingFactor[i] * bounding.m_x > AUTO_SCALING_THRESHOLD)
+					continue;
+
+				if (scalingFactor[i] * bounding.m_y > AUTO_SCALING_THRESHOLD)
+					continue;
+
+				scalingFactor[SU_Auto] = scalingFactor[i];
+				foundAutoScaling = true;
+				break;
+			}
+			if (foundAutoScaling)
+				log += QString("Found auto scaling factor: %1\n").arg(scalingFactor[SU_Auto]);
 		}
+		log += QString("Current dimensions - X: %1 Y: %2 Z: %3\n").arg(scalingFactor[su] * bounding.m_x)
+				   .arg(scalingFactor[su] * bounding.m_y)
+				   .arg(scalingFactor[su] * bounding.m_z);
+		log += QString("---------------------------------------------------------\n");
+		log += QString("\nPLEASE MIND: Currently are no hatchings supported.\n");
 
-		m_drawing.m_scalingFactor = scalingFactor;
+		m_drawing.m_scalingFactor = scalingFactor[su];
+		m_center *= scalingFactor[su];
+
+	} catch (IBK::Exception &ex) {
+		log += "Error in converting DXF-File. See Error below\n";
+		log += ex.what();
 	}
-	else
-		log += "Import of DXF-File was not successful!";
 
 	m_ui->plainTextEditLogWindow->setPlainText(log);
 }
@@ -205,8 +315,8 @@ void DRW_InterfaceImpl::addLayer(const DRW_Layer& data){
 	/* value 256 means use defaultColor, value 7 is black */
 	if (data.color != 256 && data.color != 7)
 		newLayer.m_color = QColor(DRW::dxfColors[data.color][0], DRW::dxfColors[data.color][1], DRW::dxfColors[data.color][2]);
-	else
-		newLayer.m_color = "#000000";
+//	else
+//		newLayer.m_color = SVStyle::instance().m_defaultDrawingColor;
 
 	// Push new layer into vector<Layer*> m_layer
 	m_drawing->m_drawingLayers.push_back(newLayer);
@@ -236,7 +346,8 @@ void DRW_InterfaceImpl::addAppId(const DRW_AppId& /*data*/){}
 void DRW_InterfaceImpl::addBlock(const DRW_Block& data){
 
 	// New Block
-	DrawingLayer::Block newBlock;
+	m_drawing->m_blocks.push_back(Drawing::Block());
+	Drawing::Block &newBlock = m_drawing->m_blocks.back();
 
 	// Set name
 	newBlock.m_name = QString::fromStdString(data.name);
@@ -250,8 +361,8 @@ void DRW_InterfaceImpl::addBlock(const DRW_Block& data){
 	// ID
 	newBlock.m_id = (*m_nextId)++;
 
-	// Add blocks
-	m_drawing->m_blocks.push_back(newBlock);
+	// Set base
+	newBlock.m_basePoint = IBKMK::Vector2D(data.basePoint.x, data.basePoint.y);
 
 	// Set actove block
 	m_activeBlock = &newBlock;
@@ -269,10 +380,6 @@ void DRW_InterfaceImpl::endBlock(){
 
 void DRW_InterfaceImpl::addPoint(const DRW_Point& data){
 
-	// Activeblock
-	if(m_activeBlock != nullptr)
-		return;
-
 	Drawing::Point newPoint;
 	newPoint.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
@@ -283,6 +390,8 @@ void DRW_InterfaceImpl::addPoint(const DRW_Point& data){
 	newPoint.m_layerName = QString::fromStdString(data.layer);
 
 	newPoint.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newPoint.m_blockName = m_activeBlock->m_name;
 
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -297,8 +406,6 @@ void DRW_InterfaceImpl::addPoint(const DRW_Point& data){
 
 void DRW_InterfaceImpl::addLine(const DRW_Line& data){
 
-	if(m_activeBlock != nullptr) return;
-
 	Drawing::Line newLine;
 	newLine.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
@@ -310,6 +417,8 @@ void DRW_InterfaceImpl::addLine(const DRW_Line& data){
 	newLine.m_layerName = QString::fromStdString(data.layer);
 
 	newLine.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newLine.m_blockName = m_activeBlock->m_name;
 
 	/* value 256 means use defaultColor, value 7 is black */
 	/* value 256 means use defaultColor, value 7 is black */
@@ -325,13 +434,11 @@ void DRW_InterfaceImpl::addRay(const DRW_Ray& /*data*/){}
 void DRW_InterfaceImpl::addXline(const DRW_Xline& /*data*/){}
 void DRW_InterfaceImpl::addArc(const DRW_Arc& data){
 
-	if(m_activeBlock != nullptr) return;
-
 	Drawing::Arc newArc;
 	newArc.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
 
-	//create new arc, insert into vector m_arcs from drawing
+	// create new arc, insert into vector m_arcs from drawing
 	newArc.m_radius = data.radious;
 	newArc.m_startAngle = data.staangle;
 	newArc.m_endAngle = data.endangle;
@@ -340,6 +447,8 @@ void DRW_InterfaceImpl::addArc(const DRW_Arc& data){
 	newArc.m_layerName = QString::fromStdString(data.layer);
 
 	newArc.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newArc.m_blockName = m_activeBlock->m_name;
 
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -353,7 +462,7 @@ void DRW_InterfaceImpl::addArc(const DRW_Arc& data){
 
 void DRW_InterfaceImpl::addCircle(const DRW_Circle& data){
 
-	if(m_activeBlock != nullptr) return;
+
 
 	Drawing::Circle newCircle;
 	newCircle.m_zPosition = m_drawing->m_zCounter;
@@ -366,6 +475,8 @@ void DRW_InterfaceImpl::addCircle(const DRW_Circle& data){
 	newCircle.m_layerName = QString::fromStdString(data.layer);
 
 	newCircle.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newCircle.m_blockName = m_activeBlock->m_name;
 
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -378,8 +489,6 @@ void DRW_InterfaceImpl::addCircle(const DRW_Circle& data){
 
 
 void DRW_InterfaceImpl::addEllipse(const DRW_Ellipse& data){
-
-	if(m_activeBlock != nullptr) return;
 
 	Drawing::Ellipse newEllipse;
 	newEllipse.m_zPosition = m_drawing->m_zCounter;
@@ -394,6 +503,8 @@ void DRW_InterfaceImpl::addEllipse(const DRW_Ellipse& data){
 	newEllipse.m_layerName = QString::fromStdString(data.layer);
 
 	newEllipse.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newEllipse.m_blockName = m_activeBlock->m_name;
 
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -407,8 +518,6 @@ void DRW_InterfaceImpl::addEllipse(const DRW_Ellipse& data){
 
 void DRW_InterfaceImpl::addLWPolyline(const DRW_LWPolyline& data){
 
-	if(m_activeBlock != nullptr) return;
-
 	Drawing::PolyLine newPolyline;
 	newPolyline.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
@@ -417,6 +526,8 @@ void DRW_InterfaceImpl::addLWPolyline(const DRW_LWPolyline& data){
 	newPolyline.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
 
 	newPolyline.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newPolyline.m_blockName = m_activeBlock->m_name;
 
 	// iterate over data.vertlist, insert all vertices of Polyline into vector
 	for(size_t i = 0; i < data.vertlist.size(); i++){
@@ -442,8 +553,6 @@ void DRW_InterfaceImpl::addLWPolyline(const DRW_LWPolyline& data){
 
 void DRW_InterfaceImpl::addPolyline(const DRW_Polyline& data){
 
-	if(m_activeBlock != nullptr) return;
-
 	Drawing::PolyLine newPolyline;
 	newPolyline.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
@@ -456,6 +565,9 @@ void DRW_InterfaceImpl::addPolyline(const DRW_Polyline& data){
 	}
 
 	newPolyline.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newPolyline.m_blockName = m_activeBlock->m_name;
+
 	newPolyline.m_layerName = QString::fromStdString(data.layer);
 	newPolyline.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
 
@@ -473,13 +585,29 @@ void DRW_InterfaceImpl::addPolyline(const DRW_Polyline& data){
 }
 void DRW_InterfaceImpl::addSpline(const DRW_Spline* /*data*/){}
 void DRW_InterfaceImpl::addKnot(const DRW_Entity & /*data*/){}
-void DRW_InterfaceImpl::addInsert(const DRW_Insert& /*data*/){}
+
+void DRW_InterfaceImpl::addInsert(const DRW_Insert& data){
+	Drawing::Insert newInsert;
+
+	newInsert.m_currentBlockName = QString::fromStdString(data.name);
+	newInsert.m_id = (*m_nextId)++;
+
+	newInsert.m_angle = data.angle;
+
+	newInsert.m_xScale = data.xscale;
+	newInsert.m_yScale = data.yscale;
+	newInsert.m_zScale = data.zscale;
+
+	newInsert.m_insertionPoint = IBKMK::Vector2D(data.basePoint.x, data.basePoint.y);
+	if (m_activeBlock != nullptr)
+		newInsert.m_parentBlockName = m_activeBlock->m_name;
+
+	m_drawing->m_inserts.push_back(newInsert);
+}
+
 void DRW_InterfaceImpl::addTrace(const DRW_Trace& /*data*/){}
 void DRW_InterfaceImpl::add3dFace(const DRW_3Dface& /*data*/){}
 void DRW_InterfaceImpl::addSolid(const DRW_Solid& data){
-
-	if(m_activeBlock != nullptr) return;
-
 
 	Drawing::Solid newSolid;
 	newSolid.m_zPosition = m_drawing->m_zCounter;
@@ -487,11 +615,15 @@ void DRW_InterfaceImpl::addSolid(const DRW_Solid& data){
 
 	newSolid.m_point1 = IBKMK::Vector2D(data.basePoint.x, data.basePoint.y);
 	newSolid.m_point2 = IBKMK::Vector2D(data.secPoint.x, data.secPoint.y);
-	newSolid.m_point3 = IBKMK::Vector2D(data.thirdPoint.x, data.thirdPoint.y);
-	newSolid.m_point4 = IBKMK::Vector2D(data.fourPoint.x, data.fourPoint.y);
+	newSolid.m_point3 = IBKMK::Vector2D(data.fourPoint.x, data.fourPoint.y);
+	newSolid.m_point4 = IBKMK::Vector2D(data.thirdPoint.x, data.thirdPoint.y);
+
 	newSolid.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
 	newSolid.m_layerName = QString::fromStdString(data.layer);
+
 	newSolid.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newSolid.m_blockName = m_activeBlock->m_name;
 
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -503,15 +635,34 @@ void DRW_InterfaceImpl::addSolid(const DRW_Solid& data){
 
 }
 
-void DRW_InterfaceImpl::addMText(const DRW_MText& data){
-	if(m_activeBlock != nullptr) return;
+std::string replaceFormatting(const std::string &str) {
+	std::string replaced = str;
+	try {
+		replaced = std::regex_replace(replaced, std::regex("\\\\\\\\"), "\032");
+		replaced = std::regex_replace(replaced, std::regex("\\\\P|\\n|\\t"), " ");
+		replaced = std::regex_replace(replaced, std::regex("\\\\(\\\\[ACcFfHLlOopQTW])|\\\\[ACcFfHLlOopQTW][^\\\\;]*;|\\\\[ACcFfHLlOopQTW]"), "$1");
+		replaced = std::regex_replace(replaced, std::regex("([^\\\\])\\\\S([^;]*)[/#\\^]([^;]*);"), "$1$2/$3");
+		replaced = std::regex_replace(replaced, std::regex("\\\\(\\\\S)|[\\\\](})|}"), "$1$2");
+		replaced = std::regex_replace(replaced, std::regex("\\{/?"), "");
+	}
+	catch (std::exception &ex) {
+		IBK::IBK_Message(IBK::FormatString("Could not replace all regex expressions.\n%1").arg(ex.what()),
+						 IBK::MSG_WARNING);
+	}
 
+	return replaced;
+}
+
+void DRW_InterfaceImpl::addMText(const DRW_MText& data){
 	Drawing::Text newText;
-	newText.m_text = QString::fromStdString(data.text);
+	newText.m_text = QString::fromStdString(replaceFormatting(data.text));
 	newText.m_basePoint = IBKMK::Vector2D(data.basePoint.x, data.basePoint.y);
 	newText.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
 	newText.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newText.m_blockName = m_activeBlock->m_name;
+
 	newText.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
 	newText.m_layerName = QString::fromStdString(data.layer);
 	newText.m_height = data.height;
@@ -526,9 +677,8 @@ void DRW_InterfaceImpl::addMText(const DRW_MText& data){
 
 	m_drawing->m_texts.push_back(newText);
 }
-void DRW_InterfaceImpl::addText(const DRW_Text& data){
 
-	if(m_activeBlock != nullptr) return;
+void DRW_InterfaceImpl::addText(const DRW_Text& data){
 
 	Drawing::Text newText;
 	newText.m_text = QString::fromStdString(data.text);
@@ -536,6 +686,9 @@ void DRW_InterfaceImpl::addText(const DRW_Text& data){
 	newText.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
 	newText.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newText.m_blockName = m_activeBlock->m_name;
+
 	newText.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
 	newText.m_layerName = QString::fromStdString(data.layer);
 	newText.m_height = data.height;
@@ -554,7 +707,7 @@ void DRW_InterfaceImpl::addText(const DRW_Text& data){
 }
 void DRW_InterfaceImpl::addDimAlign(const DRW_DimAligned */*data*/){}
 void DRW_InterfaceImpl::addDimLinear(const DRW_DimLinear *data){
-	if(m_activeBlock != nullptr) return;
+
 
 	// Line points
 	const DRW_Coord &def1Point = data->getDef1Point();
@@ -573,6 +726,9 @@ void DRW_InterfaceImpl::addDimLinear(const DRW_DimLinear *data){
 	newLinearDimension.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
 	newLinearDimension.m_id = (*m_nextId)++;
+	if (m_activeBlock != nullptr)
+		newLinearDimension.m_blockName = m_activeBlock->m_name;
+
 	newLinearDimension.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data->lWeight);
 	newLinearDimension.m_layerName = QString::fromStdString(data->layer);
 	newLinearDimension.m_point1 = def1;
@@ -617,88 +773,3 @@ void DRW_InterfaceImpl::writeTextstyles(){}
 void DRW_InterfaceImpl::writeVports(){}
 void DRW_InterfaceImpl::writeDimstyles(){}
 void DRW_InterfaceImpl::writeAppId(){}
-
-
-
-template <typename t>
-void drawingBoundingBox(const Drawing &d,
-						const std::vector<t> &drawingObjects,
-						IBKMK::Vector3D &upperValues,
-						IBKMK::Vector3D &lowerValues,
-						bool transformPoints = true) {
-	// FUNCID(Project::boundingBox);
-
-	// store selected surfaces
-	if (drawingObjects.empty())
-		return;
-
-	// process all drawings
-	for (const t &drawObj : drawingObjects) {
-		const DrawingLayer *dl = dynamic_cast<const DrawingLayer *>(drawObj.m_parentLayer);
-
-		Q_ASSERT(dl != nullptr);
-
-		if (!dl->m_visible)
-			continue;
-
-		std::vector<IBKMK::Vector2D> verts = drawObj.points();
-		for (const IBKMK::Vector2D &p : verts) {
-
-			// Create Vector from start and end point of the line,
-			// add point of origin to each coordinate and calculate z value
-			double zCoordinate = drawObj.m_zPosition * Z_MULTIPLYER + d.m_origin.m_z;
-			IBKMK::Vector3D p1 = IBKMK::Vector3D(p.m_x + d.m_origin.m_x,
-												 p.m_y + d.m_origin.m_y,
-												 zCoordinate);
-
-			QVector3D vec1(p1.m_x, p1.m_y, p1.m_z);
-
-			if (transformPoints) {
-				// scale Vector with selected unit
-				p1 *= d.m_scalingFactor;
-
-				// rotate Vectors
-				vec1 = d.m_rotationMatrix.toQuaternion() * vec1;
-			}
-
-			upperValues.m_x = std::max(upperValues.m_x, (double)vec1.x());
-			upperValues.m_y = std::max(upperValues.m_y, (double)vec1.y());
-			upperValues.m_z = std::max(upperValues.m_z, (double)vec1.z());
-
-			lowerValues.m_x = std::min(lowerValues.m_x, (double)vec1.x());
-			lowerValues.m_y = std::min(lowerValues.m_y, (double)vec1.y());
-			lowerValues.m_z = std::min(lowerValues.m_z, (double)vec1.z());
-		}
-	}
-}
-
-
-IBKMK::Vector3D ImportDXFDialog::boundingBox(const std::vector<const Drawing *> & drawings,
-									 IBKMK::Vector3D &center, bool transformPoints)
-{
-	IBKMK::Vector3D lowerValues(std::numeric_limits<double>::max(),
-								std::numeric_limits<double>::max(),
-								std::numeric_limits<double>::max());
-	IBKMK::Vector3D upperValues(std::numeric_limits<double>::lowest(),
-								std::numeric_limits<double>::lowest(),
-								std::numeric_limits<double>::lowest());
-
-	for (const Drawing *drawing : drawings) {
-		drawingBoundingBox<Drawing::Arc>(*drawing, drawing->m_arcs, upperValues, lowerValues, transformPoints);
-		drawingBoundingBox<Drawing::Circle>(*drawing, drawing->m_circles, upperValues, lowerValues, transformPoints);
-		drawingBoundingBox<Drawing::Ellipse>(*drawing, drawing->m_ellipses, upperValues, lowerValues, transformPoints);
-		drawingBoundingBox<Drawing::Line>(*drawing, drawing->m_lines, upperValues, lowerValues, transformPoints);
-		drawingBoundingBox<Drawing::PolyLine>(*drawing, drawing->m_polylines, upperValues, lowerValues, transformPoints);
-		drawingBoundingBox<Drawing::Point>(*drawing, drawing->m_points, upperValues, lowerValues, transformPoints);
-		drawingBoundingBox<Drawing::Solid>(*drawing, drawing->m_solids, upperValues, lowerValues, transformPoints);
-		drawingBoundingBox<Drawing::Text>(*drawing, drawing->m_texts, upperValues, lowerValues, transformPoints);
-		drawingBoundingBox<Drawing::LinearDimension>(*drawing, drawing->m_linearDimensions, upperValues, lowerValues, transformPoints);
-	}
-
-	// center point of bounding box
-	center = 0.5*(lowerValues+upperValues);
-	// difference between upper and lower values gives bounding box (dimensions of selected geometry)
-	return (upperValues-lowerValues);
-}
-
-

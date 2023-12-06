@@ -24,7 +24,7 @@ inline IBKMK::Vector3D QVector2IBKVector(const QVector3D & v) {
 
 
 Drawing::Drawing() :
-	m_blocks(std::vector<DrawingLayer::Block>()),
+	m_blocks(std::vector<Block>()),
 	m_drawingLayers(std::vector<DrawingLayer>()),
 	m_points(std::vector<Point>()),
 	m_lines(std::vector<Line>()),
@@ -49,17 +49,19 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->SetAttribute("displayName", m_displayName.toStdString());
 	if (m_visible != Drawing().m_visible)
 		e->SetAttribute("visible", IBK::val2string<bool>(m_visible));
+
 	TiXmlElement::appendSingleAttributeElement(e, "Origin", nullptr, std::string(), m_origin.toString());
 
 	m_rotationMatrix.writeXML(e);
+
 	TiXmlElement::appendSingleAttributeElement(e, "ScalingFactor", nullptr, std::string(), IBK::val2string<double>(m_scalingFactor));
 
 	if (!m_blocks.empty()) {
 		TiXmlElement * child = new TiXmlElement("Blocks");
 		e->LinkEndChild(child);
 
-		for (std::vector<DrawingLayer::Block>::const_iterator it = m_blocks.begin();
-			it != m_blocks.end(); ++it)
+		for (std::vector<Drawing::Block>::const_iterator it = m_blocks.begin();
+			 it != m_blocks.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -71,7 +73,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<DrawingLayer>::const_iterator it = m_drawingLayers.begin();
-			it != m_drawingLayers.end(); ++it)
+			 it != m_drawingLayers.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -83,7 +85,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<Point>::const_iterator it = m_points.begin();
-			it != m_points.end(); ++it)
+			 it != m_points.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -95,7 +97,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<Line>::const_iterator it = m_lines.begin();
-			it != m_lines.end(); ++it)
+			 it != m_lines.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -107,7 +109,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<PolyLine>::const_iterator it = m_polylines.begin();
-			it != m_polylines.end(); ++it)
+			 it != m_polylines.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -119,7 +121,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<Circle>::const_iterator it = m_circles.begin();
-			it != m_circles.end(); ++it)
+			 it != m_circles.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -131,7 +133,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<Ellipse>::const_iterator it = m_ellipses.begin();
-			it != m_ellipses.end(); ++it)
+			 it != m_ellipses.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -143,7 +145,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<Arc>::const_iterator it = m_arcs.begin();
-			it != m_arcs.end(); ++it)
+			 it != m_arcs.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -155,7 +157,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<Solid>::const_iterator it = m_solids.begin();
-			it != m_solids.end(); ++it)
+			 it != m_solids.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -167,7 +169,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<Text>::const_iterator it = m_texts.begin();
-			it != m_texts.end(); ++it)
+			 it != m_texts.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -179,7 +181,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<LinearDimension>::const_iterator it = m_linearDimensions.begin();
-			it != m_linearDimensions.end(); ++it)
+			 it != m_linearDimensions.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -191,7 +193,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->LinkEndChild(child);
 
 		for (std::vector<DimStyle>::const_iterator it = m_dimensionStyles.begin();
-			it != m_dimensionStyles.end(); ++it)
+			 it != m_dimensionStyles.end(); ++it)
 		{
 			it->writeXML(child);
 		}
@@ -201,7 +203,279 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		TiXmlElement::appendSingleAttributeElement(e, "ZCounter", nullptr, std::string(), IBK::val2string<unsigned int>(m_zCounter));
 	if (m_defaultColor.isValid())
 		TiXmlElement::appendSingleAttributeElement(e, "DefaultColor", nullptr, std::string(), m_defaultColor.name().toStdString());
+
 	return e;
+}
+
+
+const Drawing::AbstractDrawingObject * Drawing::objectByID(unsigned int id) const {
+	FUNCID(Drawing::objectByID);
+
+	AbstractDrawingObject *obj = m_objectPtr.at(id);
+	if (obj == nullptr)
+		throw IBK::Exception(IBK::FormatString("Drawing Object with ID #%1 not found").arg(id), FUNC_ID);
+
+	return obj;
+}
+
+
+void Drawing::updatePointer() {
+	m_objectPtr.clear();
+
+	for (unsigned int i=0; i < m_points.size(); ++i){
+		m_points[i].m_parentLayer = findLayerPointer(m_points[i].m_layerName);
+		m_points[i].m_block = findBlockPointer(m_points[i].m_blockName);
+		m_objectPtr[m_points[i].m_id] = &m_points[i];
+	}
+	for (unsigned int i=0; i < m_lines.size(); ++i){
+		m_lines[i].m_parentLayer = findLayerPointer(m_lines[i].m_layerName);
+		m_lines[i].m_block = findBlockPointer(m_lines[i].m_blockName);
+		m_objectPtr[m_lines[i].m_id] = &m_lines[i];
+	}
+	for (unsigned int i=0; i < m_polylines.size(); ++i){
+		m_polylines[i].m_parentLayer = findLayerPointer(m_polylines[i].m_layerName);
+		m_polylines[i].m_block = findBlockPointer(m_polylines[i].m_blockName);
+		m_objectPtr[m_polylines[i].m_id] = &m_polylines[i];
+	}
+	for (unsigned int i=0; i < m_circles.size(); ++i){
+		m_circles[i].m_parentLayer = findLayerPointer(m_circles[i].m_layerName);
+		m_circles[i].m_block = findBlockPointer(m_circles[i].m_blockName);
+		m_objectPtr[m_circles[i].m_id] = &m_circles[i];
+	}
+	for (unsigned int i=0; i < m_arcs.size(); ++i){
+		m_arcs[i].m_parentLayer = findLayerPointer(m_arcs[i].m_layerName);
+		m_arcs[i].m_block = findBlockPointer(m_arcs[i].m_blockName);
+		m_objectPtr[m_arcs[i].m_id] = &m_arcs[i];
+	}
+	for (unsigned int i=0; i < m_ellipses.size(); ++i){
+		m_ellipses[i].m_parentLayer = findLayerPointer(m_ellipses[i].m_layerName);
+		m_ellipses[i].m_block = findBlockPointer(m_ellipses[i].m_blockName);
+		m_objectPtr[m_ellipses[i].m_id] = &m_ellipses[i];
+	}
+	for (unsigned int i=0; i < m_solids.size(); ++i){
+		m_solids[i].m_parentLayer = findLayerPointer(m_solids[i].m_layerName);
+		m_solids[i].m_block = findBlockPointer(m_solids[i].m_blockName);
+		m_objectPtr[m_solids[i].m_id] = &m_solids[i];
+	}
+	for (unsigned int i=0; i < m_texts.size(); ++i){
+		m_texts[i].m_parentLayer = findLayerPointer(m_texts[i].m_layerName);
+		m_texts[i].m_block = findBlockPointer(m_texts[i].m_blockName);
+		m_objectPtr[m_texts[i].m_id] = &m_texts[i];
+	}
+	for (unsigned int i=0; i < m_inserts.size(); ++i){
+		for(unsigned int j = 0; j < m_blocks.size(); ++j) {
+			const QString &blockName = m_blocks[j].m_name;
+			const QString &insertBlockName = m_inserts[i].m_currentBlockName;
+			if (blockName == insertBlockName) {
+				m_inserts[i].m_currentBlock = &m_blocks[j];
+			}
+
+			const QString &insertParentBlockName = m_inserts[i].m_parentBlockName;
+			if (blockName == insertParentBlockName) {
+				m_inserts[i].m_parentBlock = &m_blocks[j];
+			}
+		}
+	}
+	for (unsigned int i=0; i < m_linearDimensions.size(); ++i){
+		m_linearDimensions[i].m_parentLayer = findLayerPointer(m_linearDimensions[i].m_layerName);
+		m_texts[i].m_block = findBlockPointer(m_linearDimensions[i].m_blockName);
+		m_objectPtr[m_linearDimensions[i].m_id] = &m_linearDimensions[i];
+
+		for(unsigned int j = 0; j < m_dimensionStyles.size(); ++j) {
+			const QString &dimStyleName = m_dimensionStyles[j].m_name;
+			const QString &styleName = m_linearDimensions[i].m_styleName;
+			if (dimStyleName == styleName) {
+				m_linearDimensions[i].m_style = &m_dimensionStyles[j];
+				break;
+			}
+		}
+
+		// In order to be safe
+		if (m_linearDimensions[i].m_style == nullptr)
+			m_linearDimensions[i].m_style = &m_dimensionStyles.front();
+	}
+
+	// Update blocks
+	//	for (unsigned int i=0; i < m_drawingLayers.size(); ++i) {
+	//		if (m_drawingLayers[i].m_idBlock != INVALID_ID ) {
+	//			for (unsigned int j=0; j < m_blocks.size(); ++j) {
+	//				if (m_blocks[j].m_id == m_drawingLayers[i].m_idBlock) {
+	//					m_drawingLayers[i].m_currentBlock = &m_blocks[j];
+	//					break;
+	//				}
+	//			}
+	//		}
+	//	}
+}
+
+
+void Drawing::generateInsertGeometries(unsigned int &nextId) {
+	FUNCID(Drawing::generateInsertGeometries);
+
+	updateParents();
+
+	for (const Drawing::Insert &insert : m_inserts) {
+
+		if (insert.m_parentBlock != nullptr)
+			continue;
+
+		if (insert.m_currentBlock == nullptr)
+			throw IBK::Exception(IBK::FormatString("Block with name '%1' was not found").arg(insert.m_currentBlockName.toStdString()), FUNC_ID);
+
+		QMatrix4x4 trans;
+		transformInsert(trans, insert, nextId);
+	}
+
+	updateParents();
+}
+
+
+template <typename t>
+void addPickPoints(const std::vector<t> &objects, const Drawing &d, std::map<unsigned int, std::vector<IBKMK::Vector3D>> &verts,
+				   const Drawing::Block *block = nullptr) {
+	for (const t& obj : objects) {
+		bool isBlockDefined = block != nullptr;
+		bool hasBlock = obj.m_block != nullptr;
+
+		if ((hasBlock && !isBlockDefined) || (isBlockDefined && !hasBlock))
+			continue;
+
+		if (isBlockDefined && hasBlock && block->m_name != obj.m_block->m_name)
+			continue;
+
+		const std::vector<IBKMK::Vector3D> &objVerts = d.points3D(obj.points2D(), obj.m_zPosition, obj.m_trans);
+		verts[obj.m_id] = objVerts;
+	}
+}
+
+
+const std::map<unsigned int, std::vector<IBKMK::Vector3D>> &Drawing::pickPoints() const {
+	FUNCID(Drawing::pickPoints);
+	try {
+		if (m_dirtyPickPoints) {
+			addPickPoints(m_points, *this, m_pickPoints);
+			addPickPoints(m_arcs, *this, m_pickPoints);
+			addPickPoints(m_circles, *this, m_pickPoints);
+			addPickPoints(m_ellipses, *this, m_pickPoints);
+			addPickPoints(m_linearDimensions, *this, m_pickPoints);
+			addPickPoints(m_lines, *this, m_pickPoints);
+			addPickPoints(m_polylines, *this, m_pickPoints);
+			addPickPoints(m_solids, *this, m_pickPoints);
+
+			m_dirtyPickPoints = false;
+		}
+		return m_pickPoints;
+	}
+	catch (IBK::Exception &ex) {
+		throw IBK::Exception(IBK::FormatString("Could not generate pick points.\n%1").arg(ex.what()), FUNC_ID);
+	}
+}
+
+
+const std::vector<IBKMK::Vector3D> Drawing::points3D(const std::vector<IBKMK::Vector2D> &verts, unsigned int zPosition, const QMatrix4x4 &trans) const {
+
+	std::vector<IBKMK::Vector3D> points3D(verts.size());
+
+	for (unsigned int i=0; i < verts.size(); ++i) {
+		const IBKMK::Vector2D &v2D = verts[i];
+		double zCoordinate = zPosition * Z_MULTIPLYER;
+		IBKMK::Vector3D v3D = IBKMK::Vector3D(v2D.m_x * m_scalingFactor,
+											  v2D.m_y * m_scalingFactor,
+											  zCoordinate);
+
+		QVector3D qV3D = m_rotationMatrix.toQuaternion() * IBKVector2QVector(v3D);
+		qV3D += IBKVector2QVector(m_origin);
+
+		// Apply block transformation from insert
+		qV3D = trans * qV3D;
+		points3D[i] = QVector2IBKVector(qV3D);
+	}
+
+	return points3D;
+}
+
+const IBKMK::Vector3D Drawing::normal() const {
+	return QVector2IBKVector(m_rotationMatrix.toQuaternion() * QVector3D(0,0,1));
+}
+
+const IBKMK::Vector3D Drawing::localX() const {
+	return QVector2IBKVector(m_rotationMatrix.toQuaternion() * QVector3D(1,0,0));
+}
+
+const IBKMK::Vector3D Drawing::localY() const {
+	return QVector2IBKVector(m_rotationMatrix.toQuaternion() * QVector3D(0,1,0));
+}
+
+
+DrawingLayer* Drawing::findLayerPointer(const QString &layername){
+	for(unsigned int i = 0; i < m_drawingLayers.size(); ++i) {
+		if (m_drawingLayers[i].m_displayName == layername)
+			return &m_drawingLayers[i];
+	}
+	return nullptr;
+}
+
+Drawing::Block *Drawing::findBlockPointer(const QString &name){
+	for(unsigned int i = 0; i < m_blocks.size(); ++i) {
+		if (m_blocks[i].m_name == name)
+			return &m_blocks[i];
+	}
+	return nullptr;
+}
+
+
+template <typename t>
+void generateObjectFromInsert(unsigned int &nextId, const Drawing::Block &block,
+							  std::vector<t> &objects, const QMatrix4x4 &trans) {
+	std::vector<t> newObjects;
+
+	for (const t &obj : objects) {
+
+		if (obj.m_block == nullptr)
+			continue;
+
+		if (obj.m_block->m_name != block.m_name)
+			continue;
+
+		t newObj(obj);
+		newObj.m_id = ++nextId;
+		newObj.m_trans = trans;
+		newObj.m_blockName = "";
+		newObj.m_block = nullptr;
+
+		newObjects.push_back(newObj);
+	}
+
+	objects.insert(objects.end(), newObjects.begin(), newObjects.end());
+}
+
+
+void Drawing::transformInsert(QMatrix4x4 & trans, const Insert & insert, unsigned int & nextId) {
+
+	Q_ASSERT(insert.m_currentBlock != nullptr);
+	IBKMK::Vector2D insertPoint = insert.m_insertionPoint - insert.m_currentBlock->m_basePoint;
+
+	trans.translate(QVector3D(insertPoint.m_x,
+							  insertPoint.m_y,
+							  0.0));
+
+	for (const Insert &i : m_inserts) {
+		if (i.m_parentBlock == nullptr)
+			continue;
+
+		if (insert.m_currentBlockName == i.m_parentBlock->m_name) {
+			transformInsert(trans, i, nextId);
+		}
+	}
+
+	generateObjectFromInsert(nextId, *insert.m_currentBlock, m_points, trans);
+	generateObjectFromInsert(nextId, *insert.m_currentBlock, m_arcs, trans);
+	generateObjectFromInsert(nextId, *insert.m_currentBlock, m_circles, trans);
+	generateObjectFromInsert(nextId, *insert.m_currentBlock, m_ellipses, trans);
+	generateObjectFromInsert(nextId, *insert.m_currentBlock, m_lines, trans);
+	generateObjectFromInsert(nextId, *insert.m_currentBlock, m_polylines, trans);
+	generateObjectFromInsert(nextId, *insert.m_currentBlock, m_solids, trans);
+	generateObjectFromInsert(nextId, *insert.m_currentBlock, m_texts, trans);
 
 }
 
@@ -237,7 +511,7 @@ void Drawing::Text::readXML(const TiXmlElement *element){
 		// search for mandatory attributes
 		if (!TiXmlAttribute::attributeByName(element, "id"))
 			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									  IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -269,7 +543,7 @@ void Drawing::Text::readXML(const TiXmlElement *element){
 					m_basePoint = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else {
@@ -286,7 +560,8 @@ void Drawing::Text::readXML(const TiXmlElement *element){
 	}
 }
 
-const std::vector<IBKMK::Vector2D> & Drawing::Text::points() const {
+
+const std::vector<IBKMK::Vector2D> &Drawing::Text::points2D() const {
 	if (m_dirtyPoints) {
 		m_pickPoints.clear();
 		m_pickPoints.push_back(m_basePoint);
@@ -325,7 +600,7 @@ void Drawing::Solid::readXML(const TiXmlElement *element){
 		// search for mandatory attributes
 		if (!TiXmlAttribute::attributeByName(element, "id"))
 			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									  IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -353,7 +628,7 @@ void Drawing::Solid::readXML(const TiXmlElement *element){
 					m_point1 = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else if (cName == "Point2") {
@@ -361,7 +636,7 @@ void Drawing::Solid::readXML(const TiXmlElement *element){
 					m_point2 = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else if (cName == "Point3") {
@@ -369,7 +644,7 @@ void Drawing::Solid::readXML(const TiXmlElement *element){
 					m_point3 = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else if (cName == "Point4") {
@@ -377,7 +652,7 @@ void Drawing::Solid::readXML(const TiXmlElement *element){
 					m_point4 = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else {
@@ -394,7 +669,8 @@ void Drawing::Solid::readXML(const TiXmlElement *element){
 	}
 }
 
-const std::vector<IBKMK::Vector2D> &Drawing::Solid::points() const {
+
+const std::vector<IBKMK::Vector2D> &Drawing::Solid::points2D() const {
 	return m_pickPoints;
 }
 
@@ -435,7 +711,7 @@ void Drawing::LinearDimension::readXML(const TiXmlElement *element){
 		// search for mandatory attributes
 		if (!TiXmlAttribute::attributeByName(element, "id"))
 			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									  IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -467,7 +743,7 @@ void Drawing::LinearDimension::readXML(const TiXmlElement *element){
 					m_point1 = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else if (cName == "Point2") {
@@ -475,7 +751,7 @@ void Drawing::LinearDimension::readXML(const TiXmlElement *element){
 					m_point2 = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else if (cName == "DimensionPoint") {
@@ -483,7 +759,7 @@ void Drawing::LinearDimension::readXML(const TiXmlElement *element){
 					m_dimensionPoint = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else if (cName == "LeftPoint") {
@@ -491,7 +767,7 @@ void Drawing::LinearDimension::readXML(const TiXmlElement *element){
 					m_leftPoint = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else if (cName == "RightPoint") {
@@ -499,7 +775,7 @@ void Drawing::LinearDimension::readXML(const TiXmlElement *element){
 					m_rightPoint = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 
@@ -508,7 +784,7 @@ void Drawing::LinearDimension::readXML(const TiXmlElement *element){
 					m_textPoint = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else {
@@ -525,9 +801,8 @@ void Drawing::LinearDimension::readXML(const TiXmlElement *element){
 	}
 }
 
-const std::vector<IBKMK::Vector2D> &Drawing::LinearDimension::points() const {
-	// special handling
-	// is populated in planeGeometries
+
+const std::vector<IBKMK::Vector2D> &Drawing::LinearDimension::points2D() const {
 	return m_pickPoints;
 }
 
@@ -552,6 +827,7 @@ TiXmlElement * Drawing::Point::writeXML(TiXmlElement * parent) const {
 	return e;
 }
 
+
 void Drawing::Point::readXML(const TiXmlElement *element){
 	FUNCID(Drawing::Circle::readXMLPrivate);
 
@@ -559,7 +835,7 @@ void Drawing::Point::readXML(const TiXmlElement *element){
 		// search for mandatory attributes
 		if (!TiXmlAttribute::attributeByName(element, "id"))
 			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									  IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
 
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
@@ -588,7 +864,7 @@ void Drawing::Point::readXML(const TiXmlElement *element){
 					m_point = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else {
@@ -605,7 +881,7 @@ void Drawing::Point::readXML(const TiXmlElement *element){
 	}
 }
 
-const std::vector<IBKMK::Vector2D> &Drawing::Point::points() const {
+const std::vector<IBKMK::Vector2D> &Drawing::Point::points2D() const {
 	if (m_dirtyPoints) {
 		m_pickPoints.clear();
 		m_pickPoints.push_back(m_point);
@@ -624,7 +900,7 @@ void Drawing::Line::readXML(const TiXmlElement *element){
 		// search for mandatory attributes
 		if (!TiXmlAttribute::attributeByName(element, "id"))
 			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									  IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
 
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
@@ -653,7 +929,7 @@ void Drawing::Line::readXML(const TiXmlElement *element){
 					m_point1 = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else if (cName == "Point2") {
@@ -661,7 +937,7 @@ void Drawing::Line::readXML(const TiXmlElement *element){
 					m_point2 = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else {
@@ -678,9 +954,11 @@ void Drawing::Line::readXML(const TiXmlElement *element){
 	}
 }
 
-const std::vector<IBKMK::Vector2D> &Drawing::Line::points() const {
+
+const std::vector<IBKMK::Vector2D> &Drawing::Line::points2D() const {
 	if (m_dirtyPoints) {
 		m_pickPoints.clear();
+
 		m_pickPoints.push_back(m_point1);
 		m_pickPoints.push_back(m_point2);
 
@@ -741,7 +1019,7 @@ void Drawing::Circle::readXML(const TiXmlElement *element){
 		// search for mandatory attributes
 		if (!TiXmlAttribute::attributeByName(element, "id"))
 			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									  IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -771,7 +1049,7 @@ void Drawing::Circle::readXML(const TiXmlElement *element){
 					m_center = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else {
@@ -788,14 +1066,15 @@ void Drawing::Circle::readXML(const TiXmlElement *element){
 	}
 }
 
-const std::vector<IBKMK::Vector2D> &Drawing::Circle::points() const {
+
+const std::vector<IBKMK::Vector2D> &Drawing::Circle::points2D() const {
 	if (m_dirtyPoints) {
 		m_pickPoints.clear();
 		m_pickPoints.resize(SEGMENT_COUNT_CIRCLE);
 
 		for(unsigned int i = 0; i < SEGMENT_COUNT_CIRCLE; ++i){
 			m_pickPoints[i] =IBKMK::Vector2D(m_center.m_x + m_radius * cos(2 * IBK::PI * i / SEGMENT_COUNT_CIRCLE),
-											 m_center.m_y + m_radius * sin(2 * IBK::PI * i / SEGMENT_COUNT_CIRCLE));
+											  m_center.m_y + m_radius * sin(2 * IBK::PI * i / SEGMENT_COUNT_CIRCLE));
 		}
 
 		m_dirtyPoints = false;
@@ -837,6 +1116,7 @@ TiXmlElement * Drawing::PolyLine::writeXML(TiXmlElement * parent) const {
 	return e;
 }
 
+
 void Drawing::PolyLine::readXML(const TiXmlElement *element){
 	FUNCID(Drawing::Arc::readXMLPrivate);
 
@@ -844,7 +1124,7 @@ void Drawing::PolyLine::readXML(const TiXmlElement *element){
 		// search for mandatory attributes
 		if (!TiXmlAttribute::attributeByName(element, "id"))
 			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									  IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -888,7 +1168,7 @@ void Drawing::PolyLine::readXML(const TiXmlElement *element){
 
 		} catch (IBK::Exception & ex) {
 			throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(element->Row())
-								  .arg("Error reading element 'PolyLine'." ), FUNC_ID);
+										 .arg("Error reading element 'PolyLine'." ), FUNC_ID);
 		}
 	}
 	catch (IBK::Exception & ex) {
@@ -899,7 +1179,8 @@ void Drawing::PolyLine::readXML(const TiXmlElement *element){
 	}
 }
 
-const std::vector<IBKMK::Vector2D> &Drawing::PolyLine::points() const {
+
+const std::vector<IBKMK::Vector2D> &Drawing::PolyLine::points2D() const {
 	if (m_dirtyPoints) {
 		m_pickPoints.clear();
 
@@ -943,7 +1224,7 @@ void Drawing::Arc::readXML(const TiXmlElement *element){
 		// search for mandatory attributes
 		if (!TiXmlAttribute::attributeByName(element, "id"))
 			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									  IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -977,7 +1258,7 @@ void Drawing::Arc::readXML(const TiXmlElement *element){
 					m_center = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else {
@@ -994,7 +1275,8 @@ void Drawing::Arc::readXML(const TiXmlElement *element){
 	}
 }
 
-const std::vector<IBKMK::Vector2D>& Drawing::Arc::points() const {
+
+const std::vector<IBKMK::Vector2D>& Drawing::Arc::points2D() const {
 
 	if (m_dirtyPoints) {
 		double startAngle = m_startAngle;
@@ -1007,10 +1289,7 @@ const std::vector<IBKMK::Vector2D>& Drawing::Arc::points() const {
 		else
 			angleDifference = endAngle - startAngle;
 
-
-		double arc_length = std::abs(angleDifference) * m_radius;
-		unsigned int n = std::ceil(arc_length / MAX_SEGMENT_ARC_LENGHT);  // Calculate n based on max_segment_length
-
+		unsigned int n = std::ceil(angleDifference / (2 * IBK::PI) * SEGMENT_COUNT_ARC);
 		double stepAngle = angleDifference / n;
 
 		m_pickPoints.resize(n + 1);
@@ -1057,7 +1336,7 @@ void Drawing::Ellipse::readXML(const TiXmlElement *element){
 		// search for mandatory attributes
 		if (!TiXmlAttribute::attributeByName(element, "id"))
 			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									  IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
 
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
@@ -1092,7 +1371,7 @@ void Drawing::Ellipse::readXML(const TiXmlElement *element){
 					m_center = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 			else if (cName == "MajorAxis") {
@@ -1100,7 +1379,7 @@ void Drawing::Ellipse::readXML(const TiXmlElement *element){
 					m_majorAxis = IBKMK::Vector2D::fromString(c->GetText());
 				} catch (IBK::Exception & ex) {
 					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
-										  .arg("Invalid vector data."), FUNC_ID);
+												 .arg("Invalid vector data."), FUNC_ID);
 				}
 			}
 
@@ -1118,8 +1397,8 @@ void Drawing::Ellipse::readXML(const TiXmlElement *element){
 	}
 }
 
-const std::vector<IBKMK::Vector2D> & Drawing::Ellipse::points() const {
 
+const std::vector<IBKMK::Vector2D> &Drawing::Ellipse::points2D() const {
 	if (m_dirtyPoints) {
 		m_pickPoints.clear();
 
@@ -1127,7 +1406,7 @@ const std::vector<IBKMK::Vector2D> & Drawing::Ellipse::points() const {
 		double startAngle = m_startAngle;
 		double endAngle = m_endAngle;
 
-		double angleStep = (endAngle - startAngle) / SEGMENT_COUNT_ELLIPSE;
+		double angleStep = (endAngle - startAngle) / (SEGMENT_COUNT_ELLIPSE - 1);
 
 		double majorRadius = sqrt(pow(m_majorAxis.m_x, 2) + pow(m_majorAxis.m_y, 2));
 		double minorRadius = majorRadius * m_ratio;
@@ -1137,7 +1416,7 @@ const std::vector<IBKMK::Vector2D> & Drawing::Ellipse::points() const {
 
 		m_pickPoints.resize(SEGMENT_COUNT_ELLIPSE);
 
-		for (unsigned int i = 0; i <= SEGMENT_COUNT_ELLIPSE; ++i) {
+		for (unsigned int i = 0; i < SEGMENT_COUNT_ELLIPSE; ++i) {
 
 			double currentAngle = startAngle + i * angleStep;
 
@@ -1156,128 +1435,6 @@ const std::vector<IBKMK::Vector2D> & Drawing::Ellipse::points() const {
 	return m_pickPoints;
 }
 
-
-const Drawing::AbstractDrawingObject *Drawing::objectByID(unsigned int id) const {
-	FUNCID(Drawing::objectByID);
-
-	AbstractDrawingObject *obj = m_objectPtr.at(id);
-	if (obj == nullptr)
-		throw IBK::Exception(IBK::FormatString("Drawing Object with ID #%1 not found").arg(id), FUNC_ID);
-
-	return obj;
-}
-
-
-void Drawing::updatePointer(){
-	m_objectPtr.clear();
-
-	for (unsigned int i=0; i < m_points.size(); ++i){
-		m_points[i].m_parentLayer = findLayerPointer(m_points[i].m_layerName);
-		m_objectPtr[m_points[i].m_id] = &m_points[i];
-	}
-	for (unsigned int i=0; i < m_lines.size(); ++i){
-		m_lines[i].m_parentLayer = findLayerPointer(m_lines[i].m_layerName);
-		m_objectPtr[m_lines[i].m_id] = &m_lines[i];
-	}
-	for (unsigned int i=0; i < m_polylines.size(); ++i){
-		m_polylines[i].m_parentLayer = findLayerPointer(m_polylines[i].m_layerName);
-		m_objectPtr[m_polylines[i].m_id] = &m_polylines[i];
-	}
-	for (unsigned int i=0; i < m_circles.size(); ++i){
-		m_circles[i].m_parentLayer = findLayerPointer(m_circles[i].m_layerName);
-		m_objectPtr[m_circles[i].m_id] = &m_circles[i];
-	}
-	for (unsigned int i=0; i < m_arcs.size(); ++i){
-		m_arcs[i].m_parentLayer = findLayerPointer(m_arcs[i].m_layerName);
-		m_objectPtr[m_arcs[i].m_id] = &m_arcs[i];
-	}
-	for (unsigned int i=0; i < m_ellipses.size(); ++i){
-		m_ellipses[i].m_parentLayer = findLayerPointer(m_ellipses[i].m_layerName);
-		m_objectPtr[m_ellipses[i].m_id] = &m_ellipses[i];
-	}
-	for (unsigned int i=0; i < m_solids.size(); ++i){
-		m_solids[i].m_parentLayer = findLayerPointer(m_solids[i].m_layerName);
-		m_objectPtr[m_solids[i].m_id] = &m_solids[i];
-	}
-	for (unsigned int i=0; i < m_texts.size(); ++i){
-		m_texts[i].m_parentLayer = findLayerPointer(m_texts[i].m_layerName);
-		m_objectPtr[m_texts[i].m_id] = &m_texts[i];
-	}
-	for (unsigned int i=0; i < m_linearDimensions.size(); ++i){
-		m_linearDimensions[i].m_parentLayer = findLayerPointer(m_linearDimensions[i].m_layerName);
-		m_objectPtr[m_linearDimensions[i].m_id] = &m_linearDimensions[i];
-
-		for(unsigned int j = 0; j < m_dimensionStyles.size(); ++j) {
-			const QString &dimStyleName = m_dimensionStyles[j].m_name;
-			const QString &styleName = m_linearDimensions[i].m_styleName;
-			if (dimStyleName == styleName) {
-				m_linearDimensions[i].m_style = &m_dimensionStyles[j];
-				break;
-			}
-		}
-
-		if (m_linearDimensions[i].m_style == nullptr)
-			m_linearDimensions[i].m_style = &m_dimensionStyles.front();
-	}
-
-	// Update blocks
-	for (unsigned int i=0; i < m_drawingLayers.size(); ++i) {
-		if (m_drawingLayers[i].m_idBlock != INVALID_ID ) {
-			for (unsigned int j=0; j < m_blocks.size(); ++j) {
-				if (m_blocks[j].m_id == m_drawingLayers[i].m_idBlock) {
-					m_drawingLayers[i].m_block = &m_blocks[j];
-					break;
-				}
-			}
-		}
-	}
-}
-
-
-DrawingLayer* Drawing::findLayerPointer(const QString &layername){
-	for(unsigned int i = 0; i < m_drawingLayers.size(); ++i) {
-		if (m_drawingLayers[i].m_displayName == layername)
-			return &m_drawingLayers[i];
-	}
-	return nullptr;
-}
-
-
-const QColor & Drawing::AbstractDrawingObject::color() const{
-	/* If the object has a color, return it, else use color of parent */
-	if (m_color.isValid())
-		return m_color;
-	else if (m_parentLayer != nullptr) {
-		const DrawingLayer *layer = m_parentLayer;
-		Q_ASSERT(layer != nullptr);
-		return layer->m_color;
-	}
-
-	return m_color;
-}
-
-
-double Drawing::AbstractDrawingObject::lineWeight() const{
-	/* if -1: use weight of layer */
-	const DrawingLayer *dl = m_parentLayer;
-
-	// TODO: how to handle case where there is no parent layer
-	if (m_lineWeight < 0) {
-		if(dl == nullptr || dl->m_lineWeight < 0){
-			return 0;
-		}
-		else{
-			return dl->m_lineWeight;
-		}
-	}
-	/* if -3: default lineWeight is used
-		if -2: lineWeight of block is used. Needs to be modified when blocks
-		are implemented */
-	else if(m_lineWeight == -3 || m_lineWeight == -2)
-		return 0;
-	else
-		return m_lineWeight;
-}
 
 TiXmlElement *Drawing::DimStyle::writeXML(TiXmlElement *parent) const {
 	if (m_id == INVALID_ID)  return nullptr;
@@ -1310,7 +1467,7 @@ void Drawing::DimStyle::readXML(const TiXmlElement *element) {
 		// search for mandatory attributes
 		if (!TiXmlAttribute::attributeByName(element, "id"))
 			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									  IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
 
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
@@ -1345,3 +1502,114 @@ void Drawing::DimStyle::readXML(const TiXmlElement *element) {
 	}
 }
 
+
+TiXmlElement *Drawing::Insert::writeXML(TiXmlElement *parent) const {
+	TiXmlElement * e = new TiXmlElement("Insert");
+	parent->LinkEndChild(e);
+
+	if (m_currentBlockName != QString())
+		e->SetAttribute("blockName", m_currentBlockName.toStdString());
+	if (m_angle != 0.0)
+		e->SetAttribute("angle", IBK::val2string<double>(m_angle));
+	if (m_xScale != 1.0)
+		e->SetAttribute("xScale", IBK::val2string<double>(m_xScale));
+	if (m_yScale != 1.0)
+		e->SetAttribute("yScale", IBK::val2string<double>(m_yScale));
+	if (m_zScale != 1.0)
+		e->SetAttribute("zScale", IBK::val2string<double>(m_zScale));
+
+	return e;
+}
+
+
+void Drawing::Insert::readXML(const TiXmlElement *element) {
+	FUNCID(Drawing::DimStyle::readXMLPrivate);
+
+	try {
+		// search for mandatory attributes
+		if (!TiXmlAttribute::attributeByName(element, "id"))
+			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+
+		const TiXmlAttribute * attrib = element->FirstAttribute();
+		while (attrib) {
+			const std::string & attribName = attrib->NameStr();
+			if (attribName == "blockName")
+				m_currentBlockName = QString::fromStdString(attrib->ValueStr());
+			else if (attribName == "angle")
+				m_angle= readPODAttributeValue<double>(element, attrib);
+			else if (attribName == "xScale")
+				m_xScale = readPODAttributeValue<double>(element, attrib);
+			else if (attribName == "yScale")
+				m_yScale = readPODAttributeValue<double>(element, attrib);
+			else if (attribName == "zScale")
+				m_zScale = readPODAttributeValue<bool>(element, attrib);
+
+			attrib = attrib->Next();
+		}
+
+		// reading elements
+
+	}
+	catch (IBK::Exception & ex) {
+		throw IBK::Exception( ex, IBK::FormatString("Error reading 'Drawing::Insert' element."), FUNC_ID);
+	}
+	catch (std::exception & ex2) {
+		throw IBK::Exception( IBK::FormatString("%1\nError reading 'Drawing::Insert' element.").arg(ex2.what()), FUNC_ID);
+	}
+}
+
+
+TiXmlElement * Drawing::Block::writeXML(TiXmlElement * parent) const {
+	if (m_id == INVALID_ID)  return nullptr;
+
+	TiXmlElement * e = new TiXmlElement("Block");
+	parent->LinkEndChild(e);
+
+	if (m_id != INVALID_ID)
+		e->SetAttribute("id", IBK::val2string<unsigned int>(m_id));
+	if (m_color.isValid())
+		e->SetAttribute("color", m_color.name().toStdString());
+	if (!m_name.isEmpty())
+		e->SetAttribute("name", m_name.toStdString());
+	if (m_lineWeight > 0)
+		e->SetAttribute("lineWeight", IBK::val2string<unsigned int>(m_lineWeight));
+
+	return e;
+}
+
+
+void Drawing::Block::readXML(const TiXmlElement *element){
+	FUNCID(Drawing::Circle::readXMLPrivate);
+
+	try {
+		// search for mandatory attributes
+		if (!TiXmlAttribute::attributeByName(element, "id"))
+			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+
+		// reading attributes
+		const TiXmlAttribute * attrib = element->FirstAttribute();
+		while (attrib) {
+			const std::string & attribName = attrib->NameStr();
+			if (attribName == "id")
+				m_id = readPODAttributeValue<unsigned int>(element, attrib);
+			else if (attribName == "lineWeight")
+				m_lineWeight = readPODAttributeValue<unsigned int>(element, attrib);
+			else if (attribName == "Name")
+				m_name = QString::fromStdString(attrib->ValueStr());
+			else if (attribName == "color")
+				m_color.setNamedColor(QString::fromStdString(attrib->ValueStr()));
+			else {
+				IBK::IBK_Message(IBK::FormatString(XML_READ_UNKNOWN_ATTRIBUTE).arg(attribName).arg(element->Row()), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			}
+			attrib = attrib->Next();
+		}
+	}
+	catch (IBK::Exception & ex) {
+		throw IBK::Exception( ex, IBK::FormatString("Error reading 'ZoneTemplate' element."), FUNC_ID);
+	}
+	catch (std::exception & ex2) {
+		throw IBK::Exception( IBK::FormatString("%1\nError reading 'ZoneTemplate' element.").arg(ex2.what()), FUNC_ID);
+	}
+}
