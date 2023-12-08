@@ -76,12 +76,6 @@ bool ImportDXFDialog::readDxfFile(Drawing &drawing, const QString &fname) {
 	return success;
 }
 
-void addPoints(IBKMK::Vector2D &center, Drawing::AbstractDrawingObject &object) {
-	for (const IBKMK::Vector2D &v2D : object.points2D()) {
-		center += v2D;
-	}
-	center /= 1 + object.points2D().size();
-}
 
 void movePoints(const IBKMK::Vector2D &center, Drawing::AbstractDrawingObject &object) {
 	for (const IBKMK::Vector2D &v2D : object.points2D()) {
@@ -130,7 +124,6 @@ void drawingObjectsWeightedCenter(const Drawing &d, const std::vector<t> &drawin
 }
 
 
-template <typename t>
 void drawingWeightedCenter(const Drawing &d,
 							IBKMK::Vector3D &center) {
 
@@ -279,8 +272,9 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		std::vector<const Drawing *> drawings;
 		drawings.push_back(&m_drawing);
 
-		IBKMK::Vector3D bounding = boundingBox(drawings, m_center, false);
-//		drawingWeightedCenter(m_drawing,aa);
+		IBKMK::Vector3D dummy;
+		IBKMK::Vector3D bounding = boundingBox(drawings, dummy, false);
+		drawingWeightedCenter(m_drawing, m_center);
 
 		// Drawing should be at least bigger than 150 m
 		double AUTO_SCALING_THRESHOLD = 1000;
@@ -304,6 +298,10 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		log += QString("Current dimensions - X: %1 Y: %2 Z: %3\n").arg(scalingFactor[su] * bounding.m_x)
 				   .arg(scalingFactor[su] * bounding.m_y)
 				   .arg(scalingFactor[su] * bounding.m_z);
+
+		log += QString("Current center - X: %1 Y: %2 Z: %3\n").arg(scalingFactor[su] * m_center.m_x)
+				   .arg(scalingFactor[su] * m_center.m_y)
+				   .arg(scalingFactor[su] * m_center.m_z);
 		log += QString("---------------------------------------------------------\n");
 		log += QString("\nPLEASE MIND: Currently are no hatchings supported.\n");
 
