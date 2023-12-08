@@ -4,8 +4,8 @@ TEMPLATE=subdirs
 
 # SUBDIRS lists all subprojects
 SUBDIRS += DXFImportPlugin \
-QtExt \
-libdxfrw \
+            QtExt \
+			libdxfrw \
 			IBK \
 			IBKMK \
 			TiCPP
