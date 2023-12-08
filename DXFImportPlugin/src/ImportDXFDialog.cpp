@@ -113,6 +113,44 @@ const Drawing& ImportDXFDialog::drawing() const {
 
 
 template <typename t>
+void drawingObjectsWeightedCenter(const Drawing &d, const std::vector<t> &drawingObjects, IBKMK::Vector3D &center, unsigned int &numPoints) {
+
+	for (const t &drawObj : drawingObjects) {
+		const DrawingLayer *dl = dynamic_cast<const DrawingLayer *>(drawObj.m_parentLayer);
+		Q_ASSERT(dl != nullptr);
+		if (!dl->m_visible)
+			continue;
+
+		const std::vector<IBKMK::Vector3D> &points = d.points3D(drawObj.points2D(), drawObj.m_zPosition, drawObj.m_trans);
+		for (const IBKMK::Vector3D &v : points) {
+			center += v;
+			numPoints++;
+		}
+	}
+}
+
+
+template <typename t>
+void drawingWeightedCenter(const Drawing &d,
+							IBKMK::Vector3D &center) {
+
+	unsigned int numPoints = 0;
+	center = IBKMK::Vector3D();
+	drawingObjectsWeightedCenter(d, d.m_arcs, center, numPoints);
+	drawingObjectsWeightedCenter(d, d.m_circles, center, numPoints);
+	drawingObjectsWeightedCenter(d, d.m_ellipses, center, numPoints);
+	drawingObjectsWeightedCenter(d, d.m_lines, center, numPoints);
+	drawingObjectsWeightedCenter(d, d.m_polylines, center, numPoints);
+	drawingObjectsWeightedCenter(d, d.m_points, center, numPoints);
+	drawingObjectsWeightedCenter(d, d.m_solids, center, numPoints);
+	drawingObjectsWeightedCenter(d, d.m_texts, center, numPoints);
+	drawingObjectsWeightedCenter(d, d.m_linearDimensions, center, numPoints);
+
+	center /= numPoints;
+}
+
+
+template <typename t>
 void drawingBoundingBox(const Drawing &d,
 						const std::vector<t> &drawingObjects,
 						IBKMK::Vector3D &upperValues,
@@ -204,8 +242,8 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 	bool success;
 	try {
-//		m_nextId = project().nextUnusedID(); // separate ID space
-//		m_drawing = Drawing();
+		// we clear the drawing
+		m_drawing = Drawing();
 		m_drawing.m_id = 1;
 
 		success = readDxfFile(m_drawing, fileName.fileName());
@@ -242,6 +280,7 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		drawings.push_back(&m_drawing);
 
 		IBKMK::Vector3D bounding = boundingBox(drawings, m_center, false);
+//		drawingWeightedCenter(m_drawing,aa);
 
 		// Drawing should be at least bigger than 150 m
 		double AUTO_SCALING_THRESHOLD = 1000;
@@ -745,6 +784,58 @@ void DRW_InterfaceImpl::addDimLinear(const DRW_DimLinear *data){
 											DRW::dxfColors[data->color][2]);
 	else
 		newLinearDimension.m_color = QColor();
+
+
+	/// Linear dimension needs to be fully constructed.
+	/// Dimension point can belongs to point 1 or 2 and has also an angle
+	/// For more information look here:
+	/// https://ezdxf.readthedocs.io/en/stable/tutorials/linear_dimension.html
+
+	IBKMK::Vector2D xAxis(1, 0);
+	IBKMK::Vector2D lineVec (std::cos(newLinearDimension.m_angle * IBK::DEG2RAD),
+							 std::sin(newLinearDimension.m_angle * IBK::DEG2RAD));
+
+	IBKMK::Vector2D lineVec2 (lineVec.m_y, -lineVec.m_x);
+
+	const unsigned int SCALING_FACTOR = 1E6;
+
+	IBKMK::Vector2D measurePoint1 = newLinearDimension.m_point1 + SCALING_FACTOR * lineVec2;
+	IBKMK::Vector2D measurePoint2 = newLinearDimension.m_point2 + SCALING_FACTOR * lineVec2;
+
+	IBK::Line lineMeasure (newLinearDimension.m_dimensionPoint -   SCALING_FACTOR * lineVec,
+						   newLinearDimension.m_dimensionPoint + 2*SCALING_FACTOR * lineVec);
+
+	IBK::Line lineLeft  (newLinearDimension.m_point1 - SCALING_FACTOR * lineVec2, measurePoint1);
+	IBK::Line lineRight (newLinearDimension.m_point2 - SCALING_FACTOR * lineVec2, measurePoint2);
+
+	IBKMK::Vector2D intersection1Left, intersection2Left;
+	IBKMK::Vector2D intersection1Right, intersection2Right;
+	bool intersect1 = lineMeasure.intersects(lineLeft, intersection1Left, intersection2Left) == 1;
+	bool intersect2 = lineMeasure.intersects(lineRight, intersection1Right, intersection2Right) == 1;
+
+	if (!intersect1 && !intersect2) {
+		IBK::IBK_Message(IBK::FormatString("Linear dimension seems broken. Skipping."), IBK::MSG_WARNING);
+		return;
+	}
+
+	IBKMK::Vector2D leftPoint, rightPoint;
+	IBKMK::Vector2D point1, point2;
+	bool left = false, right = false;
+	if (intersect1 && (newLinearDimension.m_dimensionPoint - intersection1Left).magnitudeSquared() > 1E-3 ) {
+		newLinearDimension.m_leftPoint = intersection1Left;
+		newLinearDimension.m_rightPoint = newLinearDimension.m_dimensionPoint;
+		left = true;
+	}
+	if (intersect2 && (newLinearDimension.m_dimensionPoint - intersection1Right).magnitudeSquared() > 1E-3 ) {
+		newLinearDimension.m_leftPoint = newLinearDimension.m_dimensionPoint;
+		newLinearDimension.m_rightPoint = intersection1Right;
+		right = true;
+	}
+
+	if (!left && !right) {
+		IBK::IBK_Message(IBK::FormatString("Linear dimension seems broken. Skipping."), IBK::MSG_WARNING);
+		return;
+	}
 
 	m_drawing->m_linearDimensions.push_back(newLinearDimension);
 

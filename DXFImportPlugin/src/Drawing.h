@@ -123,11 +123,11 @@ public:
 		QColor										m_color = QColor();
 		/*! Line weight of Entity, use getter lineWeight() instead */
 		double										m_lineWeight = 0;
-		/* integer to create a drawing hierarchy in a dxf file to avoid overlapping of entities */
+		/*! integer to create a drawing hierarchy in a dxf file to avoid overlapping of entities */
 		unsigned int								m_zPosition;
 		/*! Name of block. */
 		QString										m_blockName;
-		/* Block Entity belongs to, if nullptr, no block is used */
+		/*! Block Entity belongs to, if nullptr, no block is used */
 		Block										*m_block = nullptr;
 		/*! ID of object. */
 		unsigned int								m_id;
@@ -141,9 +141,7 @@ public:
 		mutable bool								m_dirtyTriangulation = true;
 		/*! Points of objects. */
 		mutable std::vector<IBKMK::Vector2D>		m_pickPoints;
-		/*! Plane Geometries with all triangulated data.
-		*/
-//		mutable std::vector<PlaneGeometry>	m_planeGeometries;
+
 	};
 
 
@@ -329,10 +327,10 @@ public:
 		IBKMK::Vector2D				m_dimensionPoint;
 
 		/*! Base point. */
-		mutable IBKMK::Vector2D		m_leftPoint;
+		IBKMK::Vector2D				m_leftPoint;
 
 		/*! Base point. */
-		mutable IBKMK::Vector2D		m_rightPoint;
+		IBKMK::Vector2D				m_rightPoint;
 
 		/*! Point 1 of Line. */
 		IBKMK::Vector2D				m_point1;

@@ -104,9 +104,12 @@ bool DXFImportPlugin::import(QWidget * parent, QString& projectText) {
 		TiXmlElement * e = new TiXmlElement("Project");
 		root->LinkEndChild(e);
 
+		TiXmlElement * drs = new TiXmlElement("Drawings");
+		e->LinkEndChild(drs);
+
 		/* if file was read successfully, add drawing to project */
 		Drawing dr = diag.drawing();
-		dr.writeXML(e);
+		dr.writeXML(drs);
 
 		// Declare a printer
 		TiXmlPrinter printer;
@@ -117,9 +120,9 @@ bool DXFImportPlugin::import(QWidget * parent, QString& projectText) {
 		// Create a std::string and copy your document data in to the string
 		std::string str = printer.CStr();
 
-//		std::ofstream outFile("C:/Test/out.xml");
-//		outFile << str;
-//		outFile.close();
+		std::ofstream outFile("C:/Test/out.xml");
+		outFile << str;
+		outFile.close();
 
 		projectText = QString::fromStdString(str);
 

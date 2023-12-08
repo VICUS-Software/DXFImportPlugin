@@ -37,177 +37,6 @@ Drawing::Drawing() :
 {}
 
 
-TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
-
-	if (m_id == INVALID_ID)  return nullptr;
-	TiXmlElement * e = new TiXmlElement("Drawing");
-	parent->LinkEndChild(e);
-
-	if (m_id != INVALID_ID)
-		e->SetAttribute("id", IBK::val2string<unsigned int>(m_id));
-	if (!m_displayName.isEmpty())
-		e->SetAttribute("displayName", m_displayName.toStdString());
-	if (m_visible != Drawing().m_visible)
-		e->SetAttribute("visible", IBK::val2string<bool>(m_visible));
-
-	TiXmlElement::appendSingleAttributeElement(e, "Origin", nullptr, std::string(), m_origin.toString());
-
-	m_rotationMatrix.writeXML(e);
-
-	TiXmlElement::appendSingleAttributeElement(e, "ScalingFactor", nullptr, std::string(), IBK::val2string<double>(m_scalingFactor));
-
-	if (!m_blocks.empty()) {
-		TiXmlElement * child = new TiXmlElement("Blocks");
-		e->LinkEndChild(child);
-
-		for (std::vector<Drawing::Block>::const_iterator it = m_blocks.begin();
-			 it != m_blocks.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_drawingLayers.empty()) {
-		TiXmlElement * child = new TiXmlElement("DrawingLayers");
-		e->LinkEndChild(child);
-
-		for (std::vector<DrawingLayer>::const_iterator it = m_drawingLayers.begin();
-			 it != m_drawingLayers.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_points.empty()) {
-		TiXmlElement * child = new TiXmlElement("Points");
-		e->LinkEndChild(child);
-
-		for (std::vector<Point>::const_iterator it = m_points.begin();
-			 it != m_points.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_lines.empty()) {
-		TiXmlElement * child = new TiXmlElement("Lines");
-		e->LinkEndChild(child);
-
-		for (std::vector<Line>::const_iterator it = m_lines.begin();
-			 it != m_lines.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_polylines.empty()) {
-		TiXmlElement * child = new TiXmlElement("Polylines");
-		e->LinkEndChild(child);
-
-		for (std::vector<PolyLine>::const_iterator it = m_polylines.begin();
-			 it != m_polylines.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_circles.empty()) {
-		TiXmlElement * child = new TiXmlElement("Circles");
-		e->LinkEndChild(child);
-
-		for (std::vector<Circle>::const_iterator it = m_circles.begin();
-			 it != m_circles.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_ellipses.empty()) {
-		TiXmlElement * child = new TiXmlElement("Ellipses");
-		e->LinkEndChild(child);
-
-		for (std::vector<Ellipse>::const_iterator it = m_ellipses.begin();
-			 it != m_ellipses.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_arcs.empty()) {
-		TiXmlElement * child = new TiXmlElement("Arcs");
-		e->LinkEndChild(child);
-
-		for (std::vector<Arc>::const_iterator it = m_arcs.begin();
-			 it != m_arcs.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_solids.empty()) {
-		TiXmlElement * child = new TiXmlElement("Solids");
-		e->LinkEndChild(child);
-
-		for (std::vector<Solid>::const_iterator it = m_solids.begin();
-			 it != m_solids.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_texts.empty()) {
-		TiXmlElement * child = new TiXmlElement("Texts");
-		e->LinkEndChild(child);
-
-		for (std::vector<Text>::const_iterator it = m_texts.begin();
-			 it != m_texts.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_linearDimensions.empty()) {
-		TiXmlElement * child = new TiXmlElement("LinearDimensions");
-		e->LinkEndChild(child);
-
-		for (std::vector<LinearDimension>::const_iterator it = m_linearDimensions.begin();
-			 it != m_linearDimensions.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-
-	if (!m_dimensionStyles.empty()) {
-		TiXmlElement * child = new TiXmlElement("DimensionStyles");
-		e->LinkEndChild(child);
-
-		for (std::vector<DimStyle>::const_iterator it = m_dimensionStyles.begin();
-			 it != m_dimensionStyles.end(); ++it)
-		{
-			it->writeXML(child);
-		}
-	}
-
-	if (m_zCounter != INVALID_ID)
-		TiXmlElement::appendSingleAttributeElement(e, "ZCounter", nullptr, std::string(), IBK::val2string<unsigned int>(m_zCounter));
-	if (m_defaultColor.isValid())
-		TiXmlElement::appendSingleAttributeElement(e, "DefaultColor", nullptr, std::string(), m_defaultColor.name().toStdString());
-
-	return e;
-}
-
-
 const Drawing::AbstractDrawingObject * Drawing::objectByID(unsigned int id) const {
 	FUNCID(Drawing::objectByID);
 
@@ -509,9 +338,11 @@ void Drawing::Text::readXML(const TiXmlElement *element){
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -598,9 +429,11 @@ void Drawing::Solid::readXML(const TiXmlElement *element){
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -709,9 +542,11 @@ void Drawing::LinearDimension::readXML(const TiXmlElement *element){
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -833,9 +668,11 @@ void Drawing::Point::readXML(const TiXmlElement *element){
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
@@ -898,10 +735,11 @@ void Drawing::Line::readXML(const TiXmlElement *element){
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
-
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -1017,9 +855,11 @@ void Drawing::Circle::readXML(const TiXmlElement *element){
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -1061,9 +901,6 @@ void Drawing::Circle::readXML(const TiXmlElement *element){
 	catch (IBK::Exception & ex) {
 		throw IBK::Exception( ex, IBK::FormatString("Error reading 'Drawing::Circle' element."), FUNC_ID);
 	}
-	catch (std::exception & ex2) {
-		throw IBK::Exception( IBK::FormatString("%1\nError reading 'Drawing::Circle' element.").arg(ex2.what()), FUNC_ID);
-	}
 }
 
 
@@ -1085,13 +922,13 @@ const std::vector<IBKMK::Vector2D> &Drawing::Circle::points2D() const {
 
 
 TiXmlElement * Drawing::PolyLine::writeXML(TiXmlElement * parent) const {
-	if (m_id == INVALID_ID)  return nullptr;
+	if (m_id == INVALID_ID)
+		return nullptr;
 
 	TiXmlElement * e = new TiXmlElement("PolyLine");
 	parent->LinkEndChild(e);
 
 	if (!m_polyline.empty()) {
-
 		if (m_id != INVALID_ID)
 			e->SetAttribute("id", IBK::val2string<unsigned int>(m_id));
 		if (m_color.isValid())
@@ -1104,6 +941,7 @@ TiXmlElement * Drawing::PolyLine::writeXML(TiXmlElement * parent) const {
 			e->SetAttribute("layer", m_layerName.toStdString());
 
 		std::stringstream vals;
+		vals << std::setprecision(4);
 		const std::vector<IBKMK::Vector2D> & polyVertexes = m_polyline;
 		for (unsigned int i=0; i<polyVertexes.size(); ++i) {
 			vals << polyVertexes[i].m_x << " " << polyVertexes[i].m_y;
@@ -1122,9 +960,11 @@ void Drawing::PolyLine::readXML(const TiXmlElement *element){
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -1222,9 +1062,11 @@ void Drawing::Arc::readXML(const TiXmlElement *element){
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -1334,10 +1176,11 @@ void Drawing::Ellipse::readXML(const TiXmlElement *element){
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
-
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -1465,9 +1308,11 @@ void Drawing::DimStyle::readXML(const TiXmlElement *element) {
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
@@ -1503,63 +1348,6 @@ void Drawing::DimStyle::readXML(const TiXmlElement *element) {
 }
 
 
-TiXmlElement *Drawing::Insert::writeXML(TiXmlElement *parent) const {
-	TiXmlElement * e = new TiXmlElement("Insert");
-	parent->LinkEndChild(e);
-
-	if (m_currentBlockName != QString())
-		e->SetAttribute("blockName", m_currentBlockName.toStdString());
-	if (m_angle != 0.0)
-		e->SetAttribute("angle", IBK::val2string<double>(m_angle));
-	if (m_xScale != 1.0)
-		e->SetAttribute("xScale", IBK::val2string<double>(m_xScale));
-	if (m_yScale != 1.0)
-		e->SetAttribute("yScale", IBK::val2string<double>(m_yScale));
-	if (m_zScale != 1.0)
-		e->SetAttribute("zScale", IBK::val2string<double>(m_zScale));
-
-	return e;
-}
-
-
-void Drawing::Insert::readXML(const TiXmlElement *element) {
-	FUNCID(Drawing::DimStyle::readXMLPrivate);
-
-	try {
-		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
-
-		const TiXmlAttribute * attrib = element->FirstAttribute();
-		while (attrib) {
-			const std::string & attribName = attrib->NameStr();
-			if (attribName == "blockName")
-				m_currentBlockName = QString::fromStdString(attrib->ValueStr());
-			else if (attribName == "angle")
-				m_angle= readPODAttributeValue<double>(element, attrib);
-			else if (attribName == "xScale")
-				m_xScale = readPODAttributeValue<double>(element, attrib);
-			else if (attribName == "yScale")
-				m_yScale = readPODAttributeValue<double>(element, attrib);
-			else if (attribName == "zScale")
-				m_zScale = readPODAttributeValue<bool>(element, attrib);
-
-			attrib = attrib->Next();
-		}
-
-		// reading elements
-
-	}
-	catch (IBK::Exception & ex) {
-		throw IBK::Exception( ex, IBK::FormatString("Error reading 'Drawing::Insert' element."), FUNC_ID);
-	}
-	catch (std::exception & ex2) {
-		throw IBK::Exception( IBK::FormatString("%1\nError reading 'Drawing::Insert' element.").arg(ex2.what()), FUNC_ID);
-	}
-}
-
-
 TiXmlElement * Drawing::Block::writeXML(TiXmlElement * parent) const {
 	if (m_id == INVALID_ID)  return nullptr;
 
@@ -1573,7 +1361,9 @@ TiXmlElement * Drawing::Block::writeXML(TiXmlElement * parent) const {
 	if (!m_name.isEmpty())
 		e->SetAttribute("name", m_name.toStdString());
 	if (m_lineWeight > 0)
-		e->SetAttribute("lineWeight", IBK::val2string<unsigned int>(m_lineWeight));
+		e->SetAttribute("lineWeight", IBK::val2string<int>(m_lineWeight));
+
+	TiXmlElement::appendSingleAttributeElement(e, "basePoint", nullptr, std::string(), m_basePoint.toString());
 
 	return e;
 }
@@ -1584,9 +1374,11 @@ void Drawing::Block::readXML(const TiXmlElement *element){
 
 	try {
 		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id"))
-			throw IBK::Exception( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-									 IBK::FormatString("Missing required 'id' attribute.") ), FUNC_ID);
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+									 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
 
 		// reading attributes
 		const TiXmlAttribute * attrib = element->FirstAttribute();
@@ -1595,8 +1387,8 @@ void Drawing::Block::readXML(const TiXmlElement *element){
 			if (attribName == "id")
 				m_id = readPODAttributeValue<unsigned int>(element, attrib);
 			else if (attribName == "lineWeight")
-				m_lineWeight = readPODAttributeValue<unsigned int>(element, attrib);
-			else if (attribName == "Name")
+				m_lineWeight = readPODAttributeValue<int>(element, attrib);
+			else if (attribName == "name")
 				m_name = QString::fromStdString(attrib->ValueStr());
 			else if (attribName == "color")
 				m_color.setNamedColor(QString::fromStdString(attrib->ValueStr()));
@@ -1605,6 +1397,24 @@ void Drawing::Block::readXML(const TiXmlElement *element){
 			}
 			attrib = attrib->Next();
 		}
+
+		// reading elements
+		const TiXmlElement * c = element->FirstChildElement();
+		while (c) {
+			const std::string & cName = c->ValueStr();
+			if (cName == "basePoint") {
+				try {
+					m_basePoint = IBKMK::Vector2D::fromString(c->GetText());
+				} catch (IBK::Exception & ex) {
+					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
+												 .arg("Invalid vector data."), FUNC_ID);
+				}
+			}
+			else {
+				IBK::IBK_Message(IBK::FormatString(XML_READ_UNKNOWN_ELEMENT).arg(cName).arg(c->Row()), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			}
+			c = c->NextSiblingElement();
+		}
 	}
 	catch (IBK::Exception & ex) {
 		throw IBK::Exception( ex, IBK::FormatString("Error reading 'ZoneTemplate' element."), FUNC_ID);
@@ -1612,4 +1422,256 @@ void Drawing::Block::readXML(const TiXmlElement *element){
 	catch (std::exception & ex2) {
 		throw IBK::Exception( IBK::FormatString("%1\nError reading 'ZoneTemplate' element.").arg(ex2.what()), FUNC_ID);
 	}
+}
+
+
+TiXmlElement *Drawing::Insert::writeXML(TiXmlElement *parent) const {
+	TiXmlElement * e = new TiXmlElement("Insert");
+	parent->LinkEndChild(e);
+
+	if (m_currentBlockName != QString())
+		e->SetAttribute("blockName", m_currentBlockName.toStdString());
+	if (m_currentBlockName != QString())
+		e->SetAttribute("parentBlockName", m_parentBlockName.toStdString());
+	if (m_angle != 0.0)
+		e->SetAttribute("angle", IBK::val2string<double>(m_angle));
+	if (m_xScale != 1.0)
+		e->SetAttribute("xScale", IBK::val2string<double>(m_xScale));
+	if (m_yScale != 1.0)
+		e->SetAttribute("yScale", IBK::val2string<double>(m_yScale));
+	if (m_zScale != 1.0)
+		e->SetAttribute("zScale", IBK::val2string<double>(m_zScale));
+
+	TiXmlElement::appendSingleAttributeElement(e, "insertionPoint", nullptr, std::string(), m_insertionPoint.toString());
+
+	return e;
+}
+
+
+void Drawing::Insert::readXML(const TiXmlElement *element) {
+	FUNCID(Drawing::DimStyle::readXMLPrivate);
+
+	try {
+		// search for mandatory attributes
+		if (!TiXmlAttribute::attributeByName(element, "id")) {
+			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
+								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			return;
+		}
+
+		const TiXmlAttribute * attrib = element->FirstAttribute();
+		while (attrib) {
+			const std::string & attribName = attrib->NameStr();
+			if (attribName == "blockName")
+				m_currentBlockName = QString::fromStdString(attrib->ValueStr());
+			else if (attribName == "parentBlockName")
+				m_parentBlockName = QString::fromStdString(attrib->ValueStr());
+			else if (attribName == "angle")
+				m_angle= readPODAttributeValue<double>(element, attrib);
+			else if (attribName == "xScale")
+				m_xScale = readPODAttributeValue<double>(element, attrib);
+			else if (attribName == "yScale")
+				m_yScale = readPODAttributeValue<double>(element, attrib);
+			else if (attribName == "zScale")
+				m_zScale = readPODAttributeValue<bool>(element, attrib);
+
+			attrib = attrib->Next();
+		}
+
+		// reading elements
+		const TiXmlElement * c = element->FirstChildElement();
+		while (c) {
+			const std::string & cName = c->ValueStr();
+			if (cName == "Point") {
+				try {
+					m_insertionPoint = IBKMK::Vector2D::fromString(c->GetText());
+				} catch (IBK::Exception & ex) {
+					throw IBK::Exception( ex, IBK::FormatString(XML_READ_ERROR).arg(c->Row())
+												 .arg("Invalid vector data."), FUNC_ID);
+				}
+			}
+			else {
+				IBK::IBK_Message(IBK::FormatString(XML_READ_UNKNOWN_ELEMENT).arg(cName).arg(c->Row()), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
+			}
+			c = c->NextSiblingElement();
+		}
+
+	}
+	catch (IBK::Exception & ex) {
+		throw IBK::Exception( ex, IBK::FormatString("Error reading 'Drawing::Insert' element."), FUNC_ID);
+	}
+	catch (std::exception & ex2) {
+		throw IBK::Exception( IBK::FormatString("%1\nError reading 'Drawing::Insert' element.").arg(ex2.what()), FUNC_ID);
+	}
+}
+
+
+TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
+
+	if (m_id == INVALID_ID)  return nullptr;
+	TiXmlElement * e = new TiXmlElement("Drawing");
+	parent->LinkEndChild(e);
+
+	if (m_id != INVALID_ID)
+		e->SetAttribute("id", IBK::val2string<unsigned int>(m_id));
+	if (!m_displayName.isEmpty())
+		e->SetAttribute("displayName", m_displayName.toStdString());
+	if (m_visible != Drawing().m_visible)
+		e->SetAttribute("visible", IBK::val2string<bool>(m_visible));
+
+	TiXmlElement::appendSingleAttributeElement(e, "Origin", nullptr, std::string(), m_origin.toString());
+
+	m_rotationMatrix.writeXML(e);
+
+	TiXmlElement::appendSingleAttributeElement(e, "ScalingFactor", nullptr, std::string(), IBK::val2string<double>(m_scalingFactor));
+
+	if (!m_blocks.empty()) {
+		TiXmlElement * child = new TiXmlElement("Blocks");
+		e->LinkEndChild(child);
+
+		for (std::vector<Drawing::Block>::const_iterator it = m_blocks.begin();
+			 it != m_blocks.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_drawingLayers.empty()) {
+		TiXmlElement * child = new TiXmlElement("DrawingLayers");
+		e->LinkEndChild(child);
+
+		for (std::vector<DrawingLayer>::const_iterator it = m_drawingLayers.begin();
+			 it != m_drawingLayers.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_points.empty()) {
+		TiXmlElement * child = new TiXmlElement("Points");
+		e->LinkEndChild(child);
+
+		for (std::vector<Point>::const_iterator it = m_points.begin();
+			 it != m_points.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_lines.empty()) {
+		TiXmlElement * child = new TiXmlElement("Lines");
+		e->LinkEndChild(child);
+
+		for (std::vector<Line>::const_iterator it = m_lines.begin();
+			 it != m_lines.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_polylines.empty()) {
+		TiXmlElement * child = new TiXmlElement("Polylines");
+		e->LinkEndChild(child);
+
+		for (std::vector<PolyLine>::const_iterator it = m_polylines.begin();
+			 it != m_polylines.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_circles.empty()) {
+		TiXmlElement * child = new TiXmlElement("Circles");
+		e->LinkEndChild(child);
+
+		for (std::vector<Circle>::const_iterator it = m_circles.begin();
+			 it != m_circles.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_ellipses.empty()) {
+		TiXmlElement * child = new TiXmlElement("Ellipses");
+		e->LinkEndChild(child);
+
+		for (std::vector<Ellipse>::const_iterator it = m_ellipses.begin();
+			 it != m_ellipses.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_arcs.empty()) {
+		TiXmlElement * child = new TiXmlElement("Arcs");
+		e->LinkEndChild(child);
+
+		for (std::vector<Arc>::const_iterator it = m_arcs.begin();
+			 it != m_arcs.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_solids.empty()) {
+		TiXmlElement * child = new TiXmlElement("Solids");
+		e->LinkEndChild(child);
+
+		for (std::vector<Solid>::const_iterator it = m_solids.begin();
+			 it != m_solids.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_texts.empty()) {
+		TiXmlElement * child = new TiXmlElement("Texts");
+		e->LinkEndChild(child);
+
+		for (std::vector<Text>::const_iterator it = m_texts.begin();
+			 it != m_texts.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_linearDimensions.empty()) {
+		TiXmlElement * child = new TiXmlElement("LinearDimensions");
+		e->LinkEndChild(child);
+
+		for (std::vector<LinearDimension>::const_iterator it = m_linearDimensions.begin();
+			 it != m_linearDimensions.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_dimensionStyles.empty()) {
+		TiXmlElement * child = new TiXmlElement("DimensionStyles");
+		e->LinkEndChild(child);
+
+		for (std::vector<DimStyle>::const_iterator it = m_dimensionStyles.begin();
+			 it != m_dimensionStyles.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+	if (m_zCounter != INVALID_ID)
+		TiXmlElement::appendSingleAttributeElement(e, "ZCounter", nullptr, std::string(), IBK::val2string<unsigned int>(m_zCounter));
+	if (m_defaultColor.isValid())
+		TiXmlElement::appendSingleAttributeElement(e, "DefaultColor", nullptr, std::string(), m_defaultColor.name().toStdString());
+
+	return e;
 }

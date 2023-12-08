@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>915</width>
-    <height>394</height>
+    <width>340</width>
+    <height>429</height>
    </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>16777215</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
@@ -78,6 +84,12 @@
    </item>
    <item row="3" column="0" colspan="2">
     <widget class="QPushButton" name="pushButtonConvert">
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>16777215</height>
+      </size>
+     </property>
      <property name="text">
       <string>Convert DXF-File</string>
      </property>
