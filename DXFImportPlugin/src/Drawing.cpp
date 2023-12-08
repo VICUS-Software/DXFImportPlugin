@@ -941,7 +941,6 @@ TiXmlElement * Drawing::PolyLine::writeXML(TiXmlElement * parent) const {
 			e->SetAttribute("layer", m_layerName.toStdString());
 
 		std::stringstream vals;
-		vals << std::setprecision(4);
 		const std::vector<IBKMK::Vector2D> & polyVertexes = m_polyline;
 		for (unsigned int i=0; i<polyVertexes.size(); ++i) {
 			vals << polyVertexes[i].m_x << " " << polyVertexes[i].m_y;
