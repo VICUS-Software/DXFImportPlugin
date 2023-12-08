@@ -325,6 +325,8 @@ TiXmlElement * Drawing::Text::writeXML(TiXmlElement * parent) const {
 		e->SetAttribute("text", m_text.toStdString());
 	if (!m_layerName.isEmpty())
 		e->SetAttribute("layer", m_layerName.toStdString());
+	if (m_rotationAngle != 0.0)
+		e->SetAttribute("rotationAngle", IBK::val2string<double>(m_rotationAngle));
 	if (m_height != 10.0)
 		e->SetAttribute("height", IBK::val2string<double>(m_height));
 
@@ -942,8 +944,10 @@ TiXmlElement * Drawing::PolyLine::writeXML(TiXmlElement * parent) const {
 
 		std::stringstream vals;
 		const std::vector<IBKMK::Vector2D> & polyVertexes = m_polyline;
+
+		int PRECISION = 15;
 		for (unsigned int i=0; i<polyVertexes.size(); ++i) {
-			vals << polyVertexes[i].m_x << " " << polyVertexes[i].m_y;
+			vals << std::setprecision(PRECISION) << polyVertexes[i].m_x << " " << polyVertexes[i].m_y;
 			if (i<polyVertexes.size()-1)  vals << ", ";
 		}
 		TiXmlText * text = new TiXmlText( vals.str() );
@@ -1298,6 +1302,10 @@ TiXmlElement *Drawing::DimStyle::writeXML(TiXmlElement *parent) const {
 		e->SetAttribute("fixedExtensionLength", IBK::val2string<bool>(m_fixedExtensionLength));
 	if (m_textHeight > 0.0)
 		e->SetAttribute("textHeight", IBK::val2string<double>(m_textHeight));
+	if (m_globalScalingFactor != 1.0)
+		e->SetAttribute("globalScalingFactor", IBK::val2string<double>(m_globalScalingFactor));
+	if (m_globalScalingFactor != 1.0)
+		e->SetAttribute("textScalingFactor", IBK::val2string<double>(m_textScalingFactor));
 
 	return e;
 }
@@ -1330,6 +1338,10 @@ void Drawing::DimStyle::readXML(const TiXmlElement *element) {
 			else if (attribName == "fixedExtensionLength")
 				m_fixedExtensionLength = readPODAttributeValue<bool>(element, attrib);
 			else if (attribName == "textHeight")
+				m_textHeight = readPODAttributeValue<double>(element, attrib);
+			else if (attribName == "globalScalingFactor")
+				m_textHeight = readPODAttributeValue<double>(element, attrib);
+			else if (attribName == "textScalingFactor")
 				m_textHeight = readPODAttributeValue<double>(element, attrib);
 
 			attrib = attrib->Next();

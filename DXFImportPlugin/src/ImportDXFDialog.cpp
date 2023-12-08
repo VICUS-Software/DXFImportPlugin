@@ -369,6 +369,11 @@ void DRW_InterfaceImpl::addDimStyle(const DRW_Dimstyle& data) {
 	dimStyle.m_fixedExtensionLength = data.dimfxlon == 1;
 	dimStyle.m_extensionLineLength = data.dimfxl;
 	dimStyle.m_textHeight = data.dimtxt;
+	dimStyle.m_globalScalingFactor = data.dimscale;
+	dimStyle.m_textScalingFactor = data.dimtfac;
+
+	qDebug() << "DimScale: " << data.dimscale;
+	qDebug() << "DimtFac: " << data.dimtfac;
 
 	dimStyle.m_id = (*m_nextId)++;
 
@@ -862,3 +867,4 @@ void DRW_InterfaceImpl::writeTextstyles(){}
 void DRW_InterfaceImpl::writeVports(){}
 void DRW_InterfaceImpl::writeDimstyles(){}
 void DRW_InterfaceImpl::writeAppId(){}
+

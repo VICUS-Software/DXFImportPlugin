@@ -171,6 +171,12 @@ public:
 		/*! Point 2 of Line. */
 		double				m_textHeight = 0.0;
 
+		/*! Global scaling factor. */
+		double				m_globalScalingFactor = 1.0;
+
+		/*! Text scaling factor. */
+		double				m_textScalingFactor = 1.0;
+
 		/*! Distance between measure line and uper point of
 			extension line */
 		double				m_upperLineDistance = 0.0;
