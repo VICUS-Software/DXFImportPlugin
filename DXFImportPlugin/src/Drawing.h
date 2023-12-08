@@ -353,6 +353,9 @@ public:
 		/*! Name of Dim style. */
 		QString						m_styleName;
 
+		/*! Measurement text. */
+		QString						m_measurement = "";
+
 		/*! Pointer to style object. Updated in
 			updatePointers();
 		*/

@@ -524,6 +524,8 @@ TiXmlElement * Drawing::LinearDimension::writeXML(TiXmlElement * parent) const {
 		e->SetAttribute("zPosition", IBK::val2string<unsigned int>(m_zPosition));
 	if (m_angle != 0.0)
 		e->SetAttribute("angle", IBK::val2string<double>(m_angle));
+	if (m_measurement != "")
+		e->SetAttribute("measurement", m_measurement.toStdString());
 	if (!m_layerName.isEmpty())
 		e->SetAttribute("layer", m_layerName.toStdString());
 	if (!m_styleName.isEmpty())

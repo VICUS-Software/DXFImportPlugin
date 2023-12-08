@@ -778,6 +778,7 @@ void DRW_InterfaceImpl::addDimLinear(const DRW_DimLinear *data){
 	newLinearDimension.m_dimensionPoint = def;
 	newLinearDimension.m_textPoint = text;
 	newLinearDimension.m_angle = data->getAngle();
+	newLinearDimension.m_measurement = data->getText();
 	newLinearDimension.m_styleName = QString::fromStdString(data->getStyle());
 
 	// value 256 means use defaultColor, value 7 is black
