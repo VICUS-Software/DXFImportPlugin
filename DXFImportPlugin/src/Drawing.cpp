@@ -236,6 +236,68 @@ const IBKMK::Vector3D Drawing::localY() const {
 }
 
 
+void Drawing::moveToOrigin() {
+
+	IBKMK::Vector2D center(m_origin.m_x, m_origin.m_y);
+//	IBKMK::Vector2D center(3.5070e6, 5.4160e6);
+
+	qDebug() << center.m_x, center.m_y;
+
+	for (Point &p: m_points)
+		p.m_point -= center;
+
+	for (Line &l: m_lines) {
+		l.m_point1 -= center;
+		l.m_point2 -= center;
+	}
+
+	for (PolyLine &pl: m_polylines) {
+		pl.m_lineWeight = 3;
+		for (IBKMK::Vector2D &v: pl.m_polyline)
+			v -= center;
+	}
+
+	for (Circle &c: m_circles) {
+		c.m_center -= center;
+	}
+
+	for (Ellipse &e: m_ellipses) {
+		e.m_center -= center;
+	}
+
+	for (Arc &a: m_arcs) {
+		a.m_center -= center;
+	}
+
+	for (Solid &s: m_solids) {
+		s.m_point1 -= center;
+		s.m_point2 -= center;
+		s.m_point3 -= center;
+		s.m_point4 -= center;
+	}
+
+	for (Text &t: m_texts) {
+		t.m_basePoint -= center;
+	}
+
+	for (LinearDimension &ld: m_linearDimensions) {
+		ld.m_dimensionPoint -= center;
+		ld.m_leftPoint -= center;
+		ld.m_rightPoint -= center;
+		ld.m_point1 -= center;
+		ld.m_point2 -= center;
+		ld.m_textPoint -= center;
+	}
+
+	for (Insert &i: m_inserts) {
+		i.m_insertionPoint -= center;
+	}
+
+	// now our origin should be 0,0,0
+	m_origin = IBKMK::Vector3D(0,0,0);
+}
+
+
 DrawingLayer* Drawing::findLayerPointer(const QString &layername){
 	for(unsigned int i = 0; i < m_drawingLayers.size(); ++i) {
 		if (m_drawingLayers[i].m_displayName == layername)

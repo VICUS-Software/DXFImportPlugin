@@ -76,15 +76,18 @@ bool ImportDXFDialog::readDxfFile(Drawing &drawing, const QString &fname) {
 	return success;
 }
 
-
-void movePoints(const IBKMK::Vector2D &center, Drawing::AbstractDrawingObject &object) {
-	for (const IBKMK::Vector2D &v2D : object.points2D()) {
-		const_cast<IBKMK::Vector2D &>(v2D) -= center;
+template <typename t>
+void movePoints(const IBKMK::Vector2D &center, std::vector<t> &objects) {
+	for (Drawing::AbstractDrawingObject &obj: objects) {
+		for (const IBKMK::Vector2D &v2D : obj.points2D()) {
+			const_cast<IBKMK::Vector2D &>(v2D) -= center;
+		}
 	}
 }
 
 void ImportDXFDialog::moveDrawings() {
-	m_drawing.m_origin = - 1.0 * m_center /** m_drawing.m_scalingFactor*/;
+	m_drawing.m_origin = m_center;
+	m_drawing.moveToOrigin();
 }
 
 void ImportDXFDialog::fixFonts() {
@@ -152,7 +155,6 @@ void drawingBoundingBox(const Drawing &d,
 						const IBKMK::Vector3D &xAxis = IBKMK::Vector3D(1,0,0),
 						const IBKMK::Vector3D &yAxis = IBKMK::Vector3D(0,1,0),
 						const IBKMK::Vector3D &zAxis = IBKMK::Vector3D(0,0,1)) {
-	// FUNCID(Project::boundingBox);
 
 	// store selected surfaces
 	if (drawingObjects.empty())
@@ -274,6 +276,8 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 		IBKMK::Vector3D dummy;
 		IBKMK::Vector3D bounding = boundingBox(drawings, dummy, false);
+
+		// calculate center
 		drawingWeightedCenter(m_drawing, m_center);
 
 		// Drawing should be at least bigger than 150 m

@@ -395,6 +395,9 @@ public:
 	/*! Returns the normal vector of the drawing. */
 	const IBKMK::Vector3D localY() const;
 
+	/*! Subtracts the origon from all coordinates */
+	void moveToOrigin();
+
 	/*! point of origin */
 	IBKMK::Vector3D															m_origin			= IBKMK::Vector3D(0,0,0);						// XML:E
 	/*! rotation matrix */
