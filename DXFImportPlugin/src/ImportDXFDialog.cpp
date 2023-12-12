@@ -371,9 +371,10 @@ void DRW_InterfaceImpl::addDimStyle(const DRW_Dimstyle& data) {
 	dimStyle.m_textHeight = data.dimtxt;
 	dimStyle.m_globalScalingFactor = data.dimscale;
 	dimStyle.m_textScalingFactor = data.dimtfac;
+	dimStyle.m_textLinearFactor = data.dimlfac;
+	dimStyle.m_textDecimalPlaces = data.dimdec;
 
-	qDebug() << "DimScale: " << data.dimscale;
-	qDebug() << "DimtFac: " << data.dimtfac;
+	qDebug() << data.dimlfac;
 
 	dimStyle.m_id = (*m_nextId)++;
 
@@ -750,7 +751,6 @@ void DRW_InterfaceImpl::addText(const DRW_Text& data){
 void DRW_InterfaceImpl::addDimAlign(const DRW_DimAligned */*data*/){}
 void DRW_InterfaceImpl::addDimLinear(const DRW_DimLinear *data){
 
-
 	// Line points
 	const DRW_Coord &def1Point = data->getDef1Point();
 	const DRW_Coord &def2Point = data->getDef2Point();
@@ -778,7 +778,7 @@ void DRW_InterfaceImpl::addDimLinear(const DRW_DimLinear *data){
 	newLinearDimension.m_dimensionPoint = def;
 	newLinearDimension.m_textPoint = text;
 	newLinearDimension.m_angle = data->getAngle();
-	newLinearDimension.m_measurement = data->getText();
+	newLinearDimension.m_measurement = data->getText().c_str();
 	newLinearDimension.m_styleName = QString::fromStdString(data->getStyle());
 
 	// value 256 means use defaultColor, value 7 is black

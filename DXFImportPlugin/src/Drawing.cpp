@@ -1308,6 +1308,11 @@ TiXmlElement *Drawing::DimStyle::writeXML(TiXmlElement *parent) const {
 		e->SetAttribute("globalScalingFactor", IBK::val2string<double>(m_globalScalingFactor));
 	if (m_globalScalingFactor != 1.0)
 		e->SetAttribute("textScalingFactor", IBK::val2string<double>(m_textScalingFactor));
+	if (m_textLinearFactor != 1.0)
+		e->SetAttribute("textLinearFactor", IBK::val2string<double>(m_textLinearFactor));
+	if (m_textDecimalPlaces != 1)
+		e->SetAttribute("textDecimalPlaces", IBK::val2string<int>(m_textDecimalPlaces));
+
 
 	return e;
 }

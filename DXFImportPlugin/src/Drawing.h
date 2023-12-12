@@ -177,6 +177,12 @@ public:
 		/*! Text scaling factor. */
 		double				m_textScalingFactor = 1.0;
 
+		/*! Text scaling linear factor. Is applied before measurement is converted to text. */
+		double				m_textLinearFactor = 1.0;
+
+		/*! Text scaling linear factor. Is applied before measurement is converted to text. */
+		int					m_textDecimalPlaces = 1;
+
 		/*! Distance between measure line and uper point of
 			extension line */
 		double				m_upperLineDistance = 0.0;
