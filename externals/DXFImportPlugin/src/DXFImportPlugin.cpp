@@ -120,11 +120,11 @@ bool DXFImportPlugin::import(QWidget * parent, QString& projectText) {
 		// Create a std::string and copy your document data in to the string
 		std::string str = printer.CStr();
 
-		std::ofstream outFile("~/vicus_drawing.xml");
-		outFile << str;
-		outFile.close();
-
 		projectText = QString::fromStdString(str);
+
+//		std::ofstream outFile("C:/Test/imported_drawing.xml");
+//		outFile << str;
+//		outFile.close();
 
 		return true;
 	}

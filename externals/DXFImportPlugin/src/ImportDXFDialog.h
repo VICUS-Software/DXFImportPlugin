@@ -24,7 +24,7 @@ class ImportDXFDialog : public QDialog
 	Q_OBJECT
 
 public:
-	explicit ImportDXFDialog(QWidget *parent = nullptr);
+	ImportDXFDialog(QWidget *parent = nullptr);
 
 	enum ImportResults {
 		AddDrawings,
@@ -46,7 +46,7 @@ public:
 
 	const Drawing &drawing() const;
 
-	static IBKMK::Vector3D boundingBox(const std::vector<const Drawing *> & drawings,
+	static IBKMK::Vector3D boundingBox(const Drawing * drawing,
 									   IBKMK::Vector3D &center,
 									   bool transformPoints);
 
@@ -83,10 +83,6 @@ private:
 	/*! Next VICUS project ID. */
 	unsigned int				m_nextId;
 
-	/*! Center point of drawing. Used in moveDrawings()
-		to center the painting. */
-	IBKMK::Vector3D				m_center;
-
 	/*! Return code. */
 	ImportResults				m_returnCode;
 
@@ -102,7 +98,7 @@ class DRW_InterfaceImpl : public DRW_Interface {
 
 	Drawing::Block		*m_activeBlock	= nullptr;
 
-	unsigned int				*m_nextId		= nullptr;
+	unsigned int		*m_nextId		= nullptr;
 
 public :
 

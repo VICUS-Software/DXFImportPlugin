@@ -27,12 +27,12 @@ DIR_PREFIX = _x64
 
 INCLUDEPATH = \
 ../../src \
-../../../externals/libdxfrw/src \
-../../../externals/libdxfrw/src/intern \
-../../../externals/IBK/src \
-../../../externals/IBKMK/src \
-../../../externals/QtExt/src \
-../../../externals/TiCPP/src
+../../../../externals/libdxfrw/src \
+../../../../externals/libdxfrw/src/intern \
+../../../../externals/IBK/src \
+../../../../externals/IBKMK/src \
+../../../../externals/QtExt/src \
+../../../../externals/TiCPP/src
 
 CONFIG(debug, debug|release) {
 OBJECTS_DIR = debug$${DIR_PREFIX}
@@ -40,9 +40,9 @@ windows {
 DESTDIR = ../../../lib$${DIR_PREFIX}
 DLLDESTDIR = ../../../../bin/debug$${DIR_PREFIX}
 }
-else {
-DESTDIR = ../../../../bin/debug$${DIR_PREFIX}
-}
+	else {
+	DESTDIR = ../../../../bin/debug$${DIR_PREFIX}
+	}
 }
 else {
 OBJECTS_DIR = release
@@ -50,10 +50,11 @@ windows {
 DESTDIR = ../../../lib$${DIR_PREFIX}
 DLLDESTDIR = ../../../../bin/release$${DIR_PREFIX}
 }
-else {
-DESTDIR = ../../../../bin/release$${DIR_PREFIX}
+	else {
+	DESTDIR = ../../../../bin/release$${DIR_PREFIX}
+	}
 }
-}
+
 
 !windows {
 #    QMAKE_POST_LINK += ../../../lib$${DIR_PREFIX}/libDXFImportPlugin.so ../../../../bin/debug$${DIR_PREFIX}/libDXFImportPlugin.so
@@ -67,7 +68,7 @@ SOURCES += \
 ../../src/DXFImportPlugin.cpp  \
 ../../src/Drawing.cpp \
 ../../src/DrawingLayer.cpp \
-    ../../src/ImportDXFDialog.cpp \
+../../src/ImportDXFDialog.cpp \
 ../../src/Object.cpp \
 ../../src/Utilities.cpp
 
@@ -75,17 +76,17 @@ HEADERS += \
 ../../src/Constants.h \
 ../../src/Drawing.h \
 ../../src/DrawingLayer.h \
-	../../src/ImportDXFDialog.h \
+../../src/ImportDXFDialog.h \
 ../../src/Object.h \
 ../../src/RotationMatrix.h \
 ../../src/SVCommonPluginInterface.h \
 ../../src/SVImportPluginInterface.h \
 ../../src/DXFImportPlugin.h \
-	../../src/Utilities.h
+../../src/Utilities.h
 
-QMAKE_LIBDIR += ../../../externals/lib$${DIR_PREFIX}
+QMAKE_LIBDIR += ../../../../externals/lib$${DIR_PREFIX}
 
-LIBS += -L../../../externals/lib$${DIR_PREFIX}
+LIBS += -L../../../../externals/lib$${DIR_PREFIX}
 
 LIBS += \
 -lTiCPP \
@@ -112,5 +113,5 @@ TRANSLATIONS += ../../resources/translations/DXFImportPlugin_de.ts
 CODECFORSRC = UTF-8
 
 FORMS += \
-    ../../src/ImportDXFDialog.ui
+../../src/ImportDXFDialog.ui
 

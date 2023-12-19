@@ -101,11 +101,34 @@ public:
 		/*! Standard C'tor. */
 		AbstractDrawingObject() = default;
 
+		/*! Copy constructor */
+		AbstractDrawingObject(const AbstractDrawingObject &other):
+			m_layerName(other.m_layerName),
+			m_color(other.m_color),
+			m_lineWeight(other.m_lineWeight),
+			m_zPosition(other.m_zPosition),
+			m_blockName(other.m_blockName),
+			m_id(other.m_id)
+			{}
+
 		/*! D'tor. */
 		virtual ~AbstractDrawingObject() {}
 
 		virtual void readXML(const TiXmlElement * element) = 0;
-		virtual TiXmlElement * writeXML(TiXmlElement * parent) const = 0;
+		/*! Abstract writeXML function: The actual object shall only be writen if this is not a block
+		 *  */
+		inline TiXmlElement * writeXML(TiXmlElement * parent) const {
+			if (m_isInsertObject)
+				return nullptr; // we don't write inserted objects, these are handled by inserts
+			TiXmlElement *e = writeXMLPrivate(parent);
+			if (e == nullptr)
+				return nullptr;
+			if (!m_blockName.isEmpty())
+				e->SetAttribute("blockName", m_blockName.toStdString());
+			return e;
+		}
+
+		virtual TiXmlElement * writeXMLPrivate(TiXmlElement * parent) const = 0;
 
 		/*! Function to update points, needed for easier
 			handling of objects in scene3D to construct 3D
@@ -133,6 +156,10 @@ public:
 		unsigned int								m_id;
 		/*! Transformation matrix. */
 		QMatrix4x4									m_trans = QMatrix4x4();
+		/*! Defines wether this is a run-time only generated object defined
+			by a block and according insert. If true the object shall not be written.
+		*/
+		bool										m_isInsertObject = false;
 
 	protected:
 		/*! Flag to indictate recalculation of points. */
@@ -195,7 +222,7 @@ public:
 	/*! Stores attributes of line */
 	struct Point : public AbstractDrawingObject {
 
-		TiXmlElement * writeXML(TiXmlElement * element) const override;
+		TiXmlElement * writeXMLPrivate(TiXmlElement * element) const override;
 		void readXML(const TiXmlElement * element) override;
 
 		/*! Calculate points. */
@@ -209,7 +236,7 @@ public:
 	/*! Stores attributes of line */
 	struct Line : public AbstractDrawingObject {
 
-		TiXmlElement * writeXML(TiXmlElement * element) const override;
+		TiXmlElement * writeXMLPrivate(TiXmlElement * element) const override;
 		void readXML(const TiXmlElement * element) override;
 
 		/*! Calculate points. */
@@ -224,7 +251,7 @@ public:
 	/*! Stores both LW and normal polyline */
 	struct PolyLine : public AbstractDrawingObject {
 
-		TiXmlElement * writeXML(TiXmlElement * element) const override;
+		TiXmlElement * writeXMLPrivate(TiXmlElement * element) const override;
 		void readXML(const TiXmlElement * element) override;
 
 		/*! Calculate points. */
@@ -239,7 +266,7 @@ public:
 	/* Stores attributes of circle */
 	struct Circle : public AbstractDrawingObject {
 
-		TiXmlElement * writeXML(TiXmlElement * element) const override;
+		TiXmlElement * writeXMLPrivate(TiXmlElement * element) const override;
 		void readXML(const TiXmlElement * element) override;
 
 		/*! Calculate points. */
@@ -254,7 +281,7 @@ public:
 	/* Stores attributes of ellipse */
 	struct Ellipse : public AbstractDrawingObject {
 
-		TiXmlElement * writeXML(TiXmlElement * element) const override;
+		TiXmlElement * writeXMLPrivate(TiXmlElement * element) const override;
 		void readXML(const TiXmlElement * element) override;
 
 		const std::vector<IBKMK::Vector2D> &points2D() const override;
@@ -274,7 +301,7 @@ public:
 	/* Stores attributes of arc */
 	struct Arc : public AbstractDrawingObject {
 
-		TiXmlElement * writeXML(TiXmlElement * element) const override;
+		TiXmlElement * writeXMLPrivate(TiXmlElement * element) const override;
 		void readXML(const TiXmlElement * element) override;
 
 		const std::vector<IBKMK::Vector2D> &points2D() const override;
@@ -292,7 +319,7 @@ public:
 	/* Stores attributes of solid, dummy struct */
 	struct Solid : public AbstractDrawingObject {
 
-		TiXmlElement * writeXML(TiXmlElement * element) const override;
+		TiXmlElement * writeXMLPrivate(TiXmlElement * element) const override;
 		void readXML(const TiXmlElement * element) override;
 
 		const std::vector<IBKMK::Vector2D> &points2D() const override;
@@ -310,7 +337,7 @@ public:
 	/* Stores attributes of text, dummy struct */
 	struct Text : public AbstractDrawingObject {
 
-		TiXmlElement * writeXML(TiXmlElement * element) const override;
+		TiXmlElement * writeXMLPrivate(TiXmlElement * element) const override;
 		void readXML(const TiXmlElement * element) override;
 
 		const std::vector<IBKMK::Vector2D> &points2D() const override;
@@ -330,7 +357,7 @@ public:
 	/* Stores attributes of text, dummy struct */
 	struct LinearDimension : public AbstractDrawingObject {
 
-		TiXmlElement * writeXML(TiXmlElement * element) const override;
+		TiXmlElement * writeXMLPrivate(TiXmlElement * element) const override;
 		void readXML(const TiXmlElement * element) override;
 
 		const std::vector<IBKMK::Vector2D> &points2D() const override;
@@ -395,6 +422,11 @@ public:
 	/*! Returns the normal vector of the drawing. */
 	const IBKMK::Vector3D localY() const;
 
+	/*! Calculates the center coordinates, defined as mean value of all coordinates
+		Pointers must be updated before calling this function!
+	*/
+	IBKMK::Vector3D weightedCenter() const;
+
 	/*! Subtracts the origon from all coordinates */
 	void moveToOrigin();
 
@@ -441,11 +473,13 @@ public:
 
 private:
 
+	const Block *findParentBlock(const Insert &i) const;
+
 	/*! Helper function to assign the correct layer to an entity */
 	DrawingLayer *findLayerPointer(const QString &layername);
 
 	/*! Helper function to assign the correct block to an entity */
-	Block* findBlockPointer(const QString &name);
+	Block* findBlockPointer(const QString &name, const std::map<QString, Block*> &blockRefs);
 
 	/*! Transforms all inserts. */
 	void transformInsert(QMatrix4x4 &trans, const Drawing::Insert &insert, unsigned int &nextId);

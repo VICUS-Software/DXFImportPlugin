@@ -11,6 +11,7 @@
 
 #include <tinyxml.h>
 
+int NUMPRECISION = 15;
 
 /*! IBKMK::Vector3D to QVector3D conversion macro. */
 inline QVector3D IBKVector2QVector(const IBKMK::Vector3D & v) {
@@ -49,92 +50,95 @@ const Drawing::AbstractDrawingObject * Drawing::objectByID(unsigned int id) cons
 
 
 void Drawing::updatePointer() {
+	FUNCID(Drawing::updatePointer);
 	m_objectPtr.clear();
 
-	for (unsigned int i=0; i < m_points.size(); ++i){
-		m_points[i].m_parentLayer = findLayerPointer(m_points[i].m_layerName);
-		m_points[i].m_block = findBlockPointer(m_points[i].m_blockName);
-		m_objectPtr[m_points[i].m_id] = &m_points[i];
+	// map layer name to reference, this avoids nested loops
+	std::map<QString, const DrawingLayer*> layerRefs;
+	for (const DrawingLayer &dl: m_drawingLayers) {
+		layerRefs[dl.m_displayName] = &dl;
 	}
-	for (unsigned int i=0; i < m_lines.size(); ++i){
-		m_lines[i].m_parentLayer = findLayerPointer(m_lines[i].m_layerName);
-		m_lines[i].m_block = findBlockPointer(m_lines[i].m_blockName);
-		m_objectPtr[m_lines[i].m_id] = &m_lines[i];
-	}
-	for (unsigned int i=0; i < m_polylines.size(); ++i){
-		m_polylines[i].m_parentLayer = findLayerPointer(m_polylines[i].m_layerName);
-		m_polylines[i].m_block = findBlockPointer(m_polylines[i].m_blockName);
-		m_objectPtr[m_polylines[i].m_id] = &m_polylines[i];
-	}
-	for (unsigned int i=0; i < m_circles.size(); ++i){
-		m_circles[i].m_parentLayer = findLayerPointer(m_circles[i].m_layerName);
-		m_circles[i].m_block = findBlockPointer(m_circles[i].m_blockName);
-		m_objectPtr[m_circles[i].m_id] = &m_circles[i];
-	}
-	for (unsigned int i=0; i < m_arcs.size(); ++i){
-		m_arcs[i].m_parentLayer = findLayerPointer(m_arcs[i].m_layerName);
-		m_arcs[i].m_block = findBlockPointer(m_arcs[i].m_blockName);
-		m_objectPtr[m_arcs[i].m_id] = &m_arcs[i];
-	}
-	for (unsigned int i=0; i < m_ellipses.size(); ++i){
-		m_ellipses[i].m_parentLayer = findLayerPointer(m_ellipses[i].m_layerName);
-		m_ellipses[i].m_block = findBlockPointer(m_ellipses[i].m_blockName);
-		m_objectPtr[m_ellipses[i].m_id] = &m_ellipses[i];
-	}
-	for (unsigned int i=0; i < m_solids.size(); ++i){
-		m_solids[i].m_parentLayer = findLayerPointer(m_solids[i].m_layerName);
-		m_solids[i].m_block = findBlockPointer(m_solids[i].m_blockName);
-		m_objectPtr[m_solids[i].m_id] = &m_solids[i];
-	}
-	for (unsigned int i=0; i < m_texts.size(); ++i){
-		m_texts[i].m_parentLayer = findLayerPointer(m_texts[i].m_layerName);
-		m_texts[i].m_block = findBlockPointer(m_texts[i].m_blockName);
-		m_objectPtr[m_texts[i].m_id] = &m_texts[i];
-	}
-	for (unsigned int i=0; i < m_inserts.size(); ++i){
-		for(unsigned int j = 0; j < m_blocks.size(); ++j) {
-			const QString &blockName = m_blocks[j].m_name;
-			const QString &insertBlockName = m_inserts[i].m_currentBlockName;
-			if (blockName == insertBlockName) {
-				m_inserts[i].m_currentBlock = &m_blocks[j];
-			}
 
-			const QString &insertParentBlockName = m_inserts[i].m_parentBlockName;
-			if (blockName == insertParentBlockName) {
-				m_inserts[i].m_parentBlock = &m_blocks[j];
-			}
+	// map block name to reference, also avoids nested loops
+	std::map<QString, Block*> blockRefs;
+	blockRefs[""] = nullptr; // This is just in case. But actually blocks without name should not exist
+	for (Block &b: m_blocks) {
+		blockRefs[b.m_name] = &b;
+	}
+
+	/* Note: Layer references must always be valid. Hence, when "layerRefs.at()" throws an exception, this is due to an invalid DXF.
+	 * Block references are optional, therefore we use the access function which returns a nullptr if there is no block ref
+	*/
+	try {
+
+		for (unsigned int i=0; i < m_points.size(); ++i){
+			m_points[i].m_parentLayer = layerRefs.at(m_points[i].m_layerName);
+			m_points[i].m_block = findBlockPointer(m_points[i].m_blockName, blockRefs);
+			m_objectPtr[m_points[i].m_id] = &m_points[i];
 		}
-	}
-	for (unsigned int i=0; i < m_linearDimensions.size(); ++i){
-		m_linearDimensions[i].m_parentLayer = findLayerPointer(m_linearDimensions[i].m_layerName);
-		m_texts[i].m_block = findBlockPointer(m_linearDimensions[i].m_blockName);
-		m_objectPtr[m_linearDimensions[i].m_id] = &m_linearDimensions[i];
-
-		for(unsigned int j = 0; j < m_dimensionStyles.size(); ++j) {
-			const QString &dimStyleName = m_dimensionStyles[j].m_name;
-			const QString &styleName = m_linearDimensions[i].m_styleName;
-			if (dimStyleName == styleName) {
-				m_linearDimensions[i].m_style = &m_dimensionStyles[j];
-				break;
-			}
+		for (unsigned int i=0; i < m_lines.size(); ++i){
+			m_lines[i].m_parentLayer = layerRefs.at(m_lines[i].m_layerName);
+			m_lines[i].m_block = findBlockPointer(m_lines[i].m_blockName, blockRefs);
+			m_objectPtr[m_lines[i].m_id] = &m_lines[i];
+		}
+		for (unsigned int i=0; i < m_polylines.size(); ++i){
+			m_polylines[i].m_parentLayer = layerRefs.at(m_polylines[i].m_layerName);
+			m_polylines[i].m_block = findBlockPointer(m_polylines[i].m_blockName, blockRefs);
+			m_objectPtr[m_polylines[i].m_id] = &m_polylines[i];
+		}
+		for (unsigned int i=0; i < m_circles.size(); ++i){
+			m_circles[i].m_parentLayer = layerRefs.at(m_circles[i].m_layerName);
+			m_circles[i].m_block = findBlockPointer(m_circles[i].m_blockName, blockRefs);
+			m_objectPtr[m_circles[i].m_id] = &m_circles[i];
+		}
+		for (unsigned int i=0; i < m_arcs.size(); ++i){
+			m_arcs[i].m_parentLayer = layerRefs.at(m_arcs[i].m_layerName);
+			m_arcs[i].m_block = findBlockPointer(m_arcs[i].m_blockName, blockRefs);
+			m_objectPtr[m_arcs[i].m_id] = &m_arcs[i];
+		}
+		for (unsigned int i=0; i < m_ellipses.size(); ++i){
+			m_ellipses[i].m_parentLayer = layerRefs.at(m_ellipses[i].m_layerName);
+			m_ellipses[i].m_block = findBlockPointer(m_ellipses[i].m_blockName, blockRefs);
+			m_objectPtr[m_ellipses[i].m_id] = &m_ellipses[i];
+		}
+		for (unsigned int i=0; i < m_solids.size(); ++i){
+			m_solids[i].m_parentLayer = layerRefs.at(m_solids[i].m_layerName);
+			m_solids[i].m_block = findBlockPointer(m_solids[i].m_blockName, blockRefs);
+			m_objectPtr[m_solids[i].m_id] = &m_solids[i];
+		}
+		for (unsigned int i=0; i < m_texts.size(); ++i){
+			m_texts[i].m_parentLayer = layerRefs.at(m_texts[i].m_layerName);
+			m_texts[i].m_block = findBlockPointer(m_texts[i].m_blockName, blockRefs);
+			m_objectPtr[m_texts[i].m_id] = &m_texts[i];
 		}
 
-		// In order to be safe
-		if (m_linearDimensions[i].m_style == nullptr)
-			m_linearDimensions[i].m_style = &m_dimensionStyles.front();
+		// For inserts there must be a valid currentBlock reference!
+		for (unsigned int i=0; i < m_inserts.size(); ++i){
+			m_inserts[i].m_currentBlock = findBlockPointer(m_inserts[i].m_currentBlockName, blockRefs);
+			Q_ASSERT(m_inserts[i].m_currentBlock);
+			m_inserts[i].m_parentBlock = findBlockPointer(m_inserts[i].m_parentBlockName, blockRefs);
+		}
+		for (unsigned int i=0; i < m_linearDimensions.size(); ++i){
+			m_linearDimensions[i].m_parentLayer = layerRefs.at(m_linearDimensions[i].m_layerName);
+			m_texts[i].m_block = findBlockPointer(m_linearDimensions[i].m_blockName, blockRefs);
+			m_objectPtr[m_linearDimensions[i].m_id] = &m_linearDimensions[i];
+			for(unsigned int j = 0; j < m_dimensionStyles.size(); ++j) {
+				const QString &dimStyleName = m_dimensionStyles[j].m_name;
+				const QString &styleName = m_linearDimensions[i].m_styleName;
+				if (dimStyleName == styleName) {
+					m_linearDimensions[i].m_style = &m_dimensionStyles[j];
+					break;
+				}
+			}
+			// In order to be safe
+			if (m_linearDimensions[i].m_style == nullptr)
+				m_linearDimensions[i].m_style = &m_dimensionStyles.front();
+		}
 	}
-
-	// Update blocks
-	//	for (unsigned int i=0; i < m_drawingLayers.size(); ++i) {
-	//		if (m_drawingLayers[i].m_idBlock != INVALID_ID ) {
-	//			for (unsigned int j=0; j < m_blocks.size(); ++j) {
-	//				if (m_blocks[j].m_id == m_drawingLayers[i].m_idBlock) {
-	//					m_drawingLayers[i].m_currentBlock = &m_blocks[j];
-	//					break;
-	//				}
-	//			}
-	//		}
-	//	}
+	catch (std::exception &ex) {
+		throw IBK::Exception(IBK::FormatString("Error during initialization of DXF file. "
+											   "Might be du to invalid layer references.\n%1").arg(ex.what()), FUNC_ID);
+	}
 }
 
 
@@ -236,40 +240,179 @@ const IBKMK::Vector3D Drawing::localY() const {
 }
 
 
+IBKMK::Vector3D Drawing::weightedCenter() const {
+
+	IBKMK::Vector2D center(0,0);
+	unsigned int num = 0;
+
+	// Take into account points only of "normal" objects, not of blocks
+
+	for (const Point &p: m_points) {
+		if (p.m_block == nullptr) {
+			center += p.m_point;
+			num++;
+		}
+	}
+
+	for (const Line &l: m_lines) {
+		if (l.m_block == nullptr) {
+			center += l.m_point1;
+			center += l.m_point2;
+			num += 2;
+		}
+	}
+
+	for (const PolyLine &pl: m_polylines) {
+		if (pl.m_block == nullptr) {
+			for (const IBKMK::Vector2D &v: pl.m_polyline) {
+				center += v;
+				num++;
+			}
+		}
+	}
+
+	for (const Circle &c: m_circles) {
+		if (c.m_block == nullptr) {
+			center += c.m_center;
+			num++;
+		}
+	}
+
+	for (const Ellipse &e: m_ellipses) {
+		if (e.m_block == nullptr) {
+			center += e.m_center;
+			num++;
+		}
+	}
+
+	for (const Arc &a: m_arcs) {
+		if (a.m_block == nullptr) {
+			center += a.m_center;
+			num++;
+		}
+	}
+
+	for (const Solid &s: m_solids) {
+		if (s.m_block == nullptr) {
+			center += s.m_point1;
+			center += s.m_point2;
+			center += s.m_point3;
+			center += s.m_point4;
+			num += 4;
+		}
+	}
+
+	for (const Text &t: m_texts) {
+		if (t.m_block == nullptr) {
+			center += t.m_basePoint;
+			num++;
+		}
+	}
+
+	for (const LinearDimension &ld: m_linearDimensions) {
+		if (ld.m_block == nullptr) {
+			center += ld.m_point1;
+			center += ld.m_point2;
+			num += 2;
+		}
+	}
+
+	std::set<const Block*> parentBlocks;
+	for (const Insert &i: m_inserts) {
+		const Block *b = findParentBlock(i);
+		if (b != nullptr) {
+			parentBlocks.insert(b);
+		}
+	}
+
+	for (const Insert &i: m_inserts) {
+		if (parentBlocks.find(i.m_currentBlock) != parentBlocks.end()) {
+			center += i.m_insertionPoint;
+			num++;
+		}
+	}
+
+	Q_ASSERT(num>0);
+	center /= num;
+
+//	center = IBKMK::Vector2D(3.33470E+07, 5.63203E+06);
+
+	return IBKMK::Vector3D(center.m_x, center.m_y, 0);
+}
+
+
+const Drawing::Block *Drawing::findParentBlock(const Insert &i) const {
+	if (i.m_parentBlock == nullptr)
+		return i.m_currentBlock;
+	for (const Insert &pIn: m_inserts) {
+		if (i.m_parentBlock == pIn.m_currentBlock) {
+			return findParentBlock(pIn);
+		}
+	}
+	return i.m_parentBlock;
+}
+
+
 void Drawing::moveToOrigin() {
 
 	IBKMK::Vector2D center(m_origin.m_x, m_origin.m_y);
-//	IBKMK::Vector2D center(3.5070e6, 5.4160e6);
 
-	qDebug() << center.m_x, center.m_y;
+	updatePointer();
 
-	for (Point &p: m_points)
+	// collect all parent blocks recursively
+	std::set<const Block*> blocks;
+	for (Insert &i: m_inserts) {
+		const Block *b = findParentBlock(i);
+		if (b != nullptr)
+			blocks.insert(b);
+	}
+
+	for (Insert &i: m_inserts) {
+		if (blocks.find(i.m_currentBlock) != blocks.end())
+			i.m_insertionPoint -= center;
+	}
+
+	for (Point &p: m_points) {
+		if (p.m_block != nullptr)
+			continue;
 		p.m_point -= center;
+	}
 
 	for (Line &l: m_lines) {
+		if (l.m_block != nullptr)
+			continue;
 		l.m_point1 -= center;
 		l.m_point2 -= center;
 	}
 
 	for (PolyLine &pl: m_polylines) {
-		pl.m_lineWeight = 3;
+		if (pl.m_block != nullptr)
+			continue;
 		for (IBKMK::Vector2D &v: pl.m_polyline)
 			v -= center;
 	}
 
 	for (Circle &c: m_circles) {
+		if (c.m_block != nullptr)
+			continue;
 		c.m_center -= center;
 	}
 
 	for (Ellipse &e: m_ellipses) {
+		if (e.m_block != nullptr)
+			continue;
 		e.m_center -= center;
 	}
 
 	for (Arc &a: m_arcs) {
+		if (a.m_block != nullptr)
+			continue;
 		a.m_center -= center;
 	}
 
 	for (Solid &s: m_solids) {
+		if (s.m_block != nullptr)
+			continue;
 		s.m_point1 -= center;
 		s.m_point2 -= center;
 		s.m_point3 -= center;
@@ -277,10 +420,14 @@ void Drawing::moveToOrigin() {
 	}
 
 	for (Text &t: m_texts) {
+		if (t.m_block != nullptr)
+			continue;
 		t.m_basePoint -= center;
 	}
 
 	for (LinearDimension &ld: m_linearDimensions) {
+		if (ld.m_block != nullptr)
+			continue;
 		ld.m_dimensionPoint -= center;
 		ld.m_leftPoint -= center;
 		ld.m_rightPoint -= center;
@@ -289,29 +436,17 @@ void Drawing::moveToOrigin() {
 		ld.m_textPoint -= center;
 	}
 
-	for (Insert &i: m_inserts) {
-		i.m_insertionPoint -= center;
-	}
-
 	// now our origin should be 0,0,0
 	m_origin = IBKMK::Vector3D(0,0,0);
 }
 
 
-DrawingLayer* Drawing::findLayerPointer(const QString &layername){
-	for(unsigned int i = 0; i < m_drawingLayers.size(); ++i) {
-		if (m_drawingLayers[i].m_displayName == layername)
-			return &m_drawingLayers[i];
-	}
-	return nullptr;
-}
-
-Drawing::Block *Drawing::findBlockPointer(const QString &name){
-	for(unsigned int i = 0; i < m_blocks.size(); ++i) {
-		if (m_blocks[i].m_name == name)
-			return &m_blocks[i];
-	}
-	return nullptr;
+Drawing::Block *Drawing::findBlockPointer(const QString &name, const std::map<QString, Block*> &blockRefs){
+	const auto it = blockRefs.find(name);
+	if (it == blockRefs.end())
+		return nullptr;
+	else
+		return it->second;
 }
 
 
@@ -333,6 +468,7 @@ void generateObjectFromInsert(unsigned int &nextId, const Drawing::Block &block,
 		newObj.m_trans = trans;
 		newObj.m_blockName = "";
 		newObj.m_block = nullptr;
+		newObj.m_isInsertObject = true;
 
 		newObjects.push_back(newObj);
 	}
@@ -371,7 +507,7 @@ void Drawing::transformInsert(QMatrix4x4 & trans, const Insert & insert, unsigne
 }
 
 
-TiXmlElement * Drawing::Text::writeXML(TiXmlElement * parent) const {
+TiXmlElement * Drawing::Text::writeXMLPrivate(TiXmlElement * parent) const {
 	if (m_id == INVALID_ID)  return nullptr;
 
 	TiXmlElement * e = new TiXmlElement("Text");
@@ -391,6 +527,8 @@ TiXmlElement * Drawing::Text::writeXML(TiXmlElement * parent) const {
 		e->SetAttribute("rotationAngle", IBK::val2string<double>(m_rotationAngle));
 	if (m_height != 10.0)
 		e->SetAttribute("height", IBK::val2string<double>(m_height));
+	if (!m_blockName.isEmpty())
+		e->SetAttribute("blockName", m_blockName.toStdString());
 
 	TiXmlElement::appendSingleAttributeElement(e, "BasePoint", nullptr, std::string(), m_basePoint.toString());
 
@@ -465,7 +603,7 @@ const std::vector<IBKMK::Vector2D> &Drawing::Text::points2D() const {
 }
 
 
-TiXmlElement * Drawing::Solid::writeXML(TiXmlElement * parent) const {
+TiXmlElement * Drawing::Solid::writeXMLPrivate(TiXmlElement * parent) const {
 	if (m_id == INVALID_ID)  return nullptr;
 
 	TiXmlElement * e = new TiXmlElement("Solid");
@@ -572,7 +710,7 @@ const std::vector<IBKMK::Vector2D> &Drawing::Solid::points2D() const {
 }
 
 
-TiXmlElement * Drawing::LinearDimension::writeXML(TiXmlElement * parent) const {
+TiXmlElement * Drawing::LinearDimension::writeXMLPrivate(TiXmlElement * parent) const {
 	if (m_id == INVALID_ID)  return nullptr;
 
 	TiXmlElement * e = new TiXmlElement("LinearDimension");
@@ -708,7 +846,7 @@ const std::vector<IBKMK::Vector2D> &Drawing::LinearDimension::points2D() const {
 }
 
 
-TiXmlElement * Drawing::Point::writeXML(TiXmlElement * parent) const {
+TiXmlElement * Drawing::Point::writeXMLPrivate(TiXmlElement * parent) const {
 	if (m_id == INVALID_ID)  return nullptr;
 
 	TiXmlElement * e = new TiXmlElement("Point");
@@ -873,7 +1011,7 @@ const std::vector<IBKMK::Vector2D> &Drawing::Line::points2D() const {
 }
 
 
-TiXmlElement * Drawing::Line::writeXML(TiXmlElement * parent) const {
+TiXmlElement * Drawing::Line::writeXMLPrivate(TiXmlElement * parent) const {
 	if (m_id == INVALID_ID)  return nullptr;
 
 	TiXmlElement * e = new TiXmlElement("Line");
@@ -895,7 +1033,7 @@ TiXmlElement * Drawing::Line::writeXML(TiXmlElement * parent) const {
 }
 
 
-TiXmlElement * Drawing::Circle::writeXML(TiXmlElement * parent) const {
+TiXmlElement * Drawing::Circle::writeXMLPrivate(TiXmlElement * parent) const {
 	if (m_id == INVALID_ID)  return nullptr;
 
 	TiXmlElement * e = new TiXmlElement("Circle");
@@ -987,7 +1125,7 @@ const std::vector<IBKMK::Vector2D> &Drawing::Circle::points2D() const {
 }
 
 
-TiXmlElement * Drawing::PolyLine::writeXML(TiXmlElement * parent) const {
+TiXmlElement * Drawing::PolyLine::writeXMLPrivate(TiXmlElement * parent) const {
 	if (m_id == INVALID_ID)
 		return nullptr;
 
@@ -1009,9 +1147,8 @@ TiXmlElement * Drawing::PolyLine::writeXML(TiXmlElement * parent) const {
 		std::stringstream vals;
 		const std::vector<IBKMK::Vector2D> & polyVertexes = m_polyline;
 
-		int PRECISION = 15;
 		for (unsigned int i=0; i<polyVertexes.size(); ++i) {
-			vals << std::setprecision(PRECISION) << polyVertexes[i].m_x << " " << polyVertexes[i].m_y;
+			vals << std::setprecision(NUMPRECISION) << polyVertexes[i].m_x << " " << polyVertexes[i].m_y;
 			if (i<polyVertexes.size()-1)  vals << ", ";
 		}
 		TiXmlText * text = new TiXmlText( vals.str() );
@@ -1101,7 +1238,7 @@ const std::vector<IBKMK::Vector2D> &Drawing::PolyLine::points2D() const {
 }
 
 
-TiXmlElement * Drawing::Arc::writeXML(TiXmlElement * parent) const {
+TiXmlElement * Drawing::Arc::writeXMLPrivate(TiXmlElement * parent) const {
 	if (m_id == INVALID_ID)  return nullptr;
 
 	TiXmlElement * e = new TiXmlElement("Arc");
@@ -1213,7 +1350,7 @@ const std::vector<IBKMK::Vector2D>& Drawing::Arc::points2D() const {
 }
 
 
-TiXmlElement * Drawing::Ellipse::writeXML(TiXmlElement * parent) const {
+TiXmlElement * Drawing::Ellipse::writeXMLPrivate(TiXmlElement * parent) const {
 	if (m_id == INVALID_ID)  return nullptr;
 
 	TiXmlElement * e = new TiXmlElement("Ellipse");
@@ -1354,7 +1491,7 @@ TiXmlElement *Drawing::DimStyle::writeXML(TiXmlElement *parent) const {
 
 	if (m_id != INVALID_ID)
 		e->SetAttribute("id", IBK::val2string<unsigned int>(m_id));
-	if (m_name != QString())
+	if (!m_name.isEmpty())
 		e->SetAttribute("name", m_name.toStdString());
 	if (m_upperLineDistance > 0.0)
 		e->SetAttribute("upperLineDistance", IBK::val2string<double>(m_upperLineDistance));
@@ -1374,7 +1511,6 @@ TiXmlElement *Drawing::DimStyle::writeXML(TiXmlElement *parent) const {
 		e->SetAttribute("textLinearFactor", IBK::val2string<double>(m_textLinearFactor));
 	if (m_textDecimalPlaces != 1)
 		e->SetAttribute("textDecimalPlaces", IBK::val2string<int>(m_textDecimalPlaces));
-
 
 	return e;
 }
@@ -1509,9 +1645,9 @@ TiXmlElement *Drawing::Insert::writeXML(TiXmlElement *parent) const {
 	TiXmlElement * e = new TiXmlElement("Insert");
 	parent->LinkEndChild(e);
 
-	if (m_currentBlockName != QString())
+	if (!m_currentBlockName.isEmpty())
 		e->SetAttribute("blockName", m_currentBlockName.toStdString());
-	if (m_currentBlockName != QString())
+	if (!m_parentBlockName.isEmpty())
 		e->SetAttribute("parentBlockName", m_parentBlockName.toStdString());
 	if (m_angle != 0.0)
 		e->SetAttribute("angle", IBK::val2string<double>(m_angle));
@@ -1532,12 +1668,6 @@ void Drawing::Insert::readXML(const TiXmlElement *element) {
 	FUNCID(Drawing::DimStyle::readXMLPrivate);
 
 	try {
-		// search for mandatory attributes
-		if (!TiXmlAttribute::attributeByName(element, "id")) {
-			IBK::IBK_Message( IBK::FormatString(XML_READ_ERROR).arg(element->Row()).arg(
-								 IBK::FormatString("Missing required 'id' attribute.") ), IBK::MSG_WARNING, FUNC_ID, IBK::VL_STANDARD);
-			return;
-		}
 
 		const TiXmlAttribute * attrib = element->FirstAttribute();
 		while (attrib) {
@@ -1743,6 +1873,18 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 
 		for (std::vector<DimStyle>::const_iterator it = m_dimensionStyles.begin();
 			 it != m_dimensionStyles.end(); ++it)
+		{
+			it->writeXML(child);
+		}
+	}
+
+
+	if (!m_inserts.empty()) {
+		TiXmlElement * child = new TiXmlElement("Inserts");
+		e->LinkEndChild(child);
+
+		for (std::vector<Insert>::const_iterator it = m_inserts.begin();
+			 it != m_inserts.end(); ++it)
 		{
 			it->writeXML(child);
 		}
