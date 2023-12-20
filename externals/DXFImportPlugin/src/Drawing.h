@@ -401,6 +401,8 @@ public:
 	/*! Returns the drawing object based on the ID. */
 	const AbstractDrawingObject* objectByID(unsigned int id) const;
 
+	void sortLayersAlphabetical();
+
 	/*! used to assign the correct layer to an entity */
 	void updatePointer();
 
@@ -429,6 +431,8 @@ public:
 
 	/*! Subtracts the origon from all coordinates */
 	void moveToOrigin();
+
+	void compensateCoordinates();
 
 	/*! point of origin */
 	IBKMK::Vector3D															m_origin			= IBKMK::Vector3D(0,0,0);						// XML:E

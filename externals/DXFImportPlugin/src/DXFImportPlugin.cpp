@@ -31,47 +31,47 @@ bool DXFImportPlugin::import(QWidget * parent, QString& projectText) {
 				parent,
 				tr("Select DXF file"),
 				m_dxfFileName,
-				tr("DXF files (*.dxf *dwg);;All files (*.*)"), nullptr );
+				tr("DXF files (*.dxf);;All files (*.*)"), nullptr );
 
 	if (filename.isEmpty())
 		return false;
 
-	// convert to dxf ?
-	if (filename.endsWith(".dwg")) {
+//	// convert to dxf ?
+//	if (filename.endsWith(".dwg")) {
 
-		int response = QMessageBox::question(parent, tr("File conversion"), tr("Do you want to convert the dwg-file to dxf-format with SIM-VICUS?"), tr("Convert with SIM-VICUS"), tr("Cancel, I will convert it myself"));
-		if (response != QMessageBox::AcceptRole)
-			return false;
+//		int response = QMessageBox::question(parent, tr("File conversion"), tr("Do you want to convert the dwg-file to dxf-format with SIM-VICUS?"), tr("Convert with SIM-VICUS"), tr("Cancel, I will convert it myself"));
+//		if (response != QMessageBox::AcceptRole)
+//			return false;
 
-		unsigned int exitCode = 0;
-		bool success = false;
-//		QProgressDialog dlg(tr("Running test-init on NANDRAD project"), tr("Cancel"), 0, 0, parent);
-//		dlg.setMinimumDuration(0);
-//		dlg.setParent(parent);
-//		dlg.show();
-//		qApp->processEvents();
+//		unsigned int exitCode = 0;
+//		bool success = false;
+////		QProgressDialog dlg(tr("Running test-init on NANDRAD project"), tr("Cancel"), 0, 0, parent);
+////		dlg.setMinimumDuration(0);
+////		dlg.setParent(parent);
+////		dlg.show();
+////		qApp->processEvents();
 
-		// create cmd line
-		QFileInfo fileInfo(filename);
-		QDir dir = fileInfo.dir();
-		QString dxfFileName = dir.absoluteFilePath(fileInfo.baseName() + ".dxf");
+//		// create cmd line
+//		QFileInfo fileInfo(filename);
+//		QDir dir = fileInfo.dir();
+//		QString dxfFileName = dir.absoluteFilePath(fileInfo.baseName() + ".dxf");
 
-		QStringList commandLineArgs;
-		commandLineArgs << filename << dxfFileName;
+//		QStringList commandLineArgs;
+//		commandLineArgs << filename << dxfFileName;
 
-		QProcess p;
-		p.start("plugins/DXFImport/dwg2dxf.exe", commandLineArgs);
-		p.waitForFinished(10000);
-		exitCode = (unsigned int)p.exitCode();
-		success = p.exitStatus() == 0 && exitCode == 0;
+//		QProcess p;
+//		p.start("plugins/DXFImport/dwg2dxf.exe", commandLineArgs);
+//		p.waitForFinished(10000);
+//		exitCode = (unsigned int)p.exitCode();
+//		success = p.exitStatus() == 0 && exitCode == 0;
 
-		if (!success) {
-			QMessageBox::critical(parent, tr("Conversion Error"), tr("Could not convert dwg file to dxf format! You may try to export a dxf file directly from your CAD software!"));
-			return false;
-		}
+//		if (!success) {
+//			QMessageBox::critical(parent, tr("Conversion Error"), tr("Could not convert dwg file to dxf format! You may try to export a dxf file directly from your CAD software!"));
+//			return false;
+//		}
 
-		filename = dxfFileName;
-	}
+//		filename = dxfFileName;
+//	}
 
 	QFile f1(filename);
 	if (!f1.exists()) {

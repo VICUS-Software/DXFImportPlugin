@@ -57,6 +57,12 @@ private slots:
 
 	void on_pushButtonImport_clicked();
 
+	void on_lineEditCustomCenterX_editingFinished();
+
+	void on_lineEditCustomCenterY_editingFinished();
+
+	void on_groupBoxCustomCenter_clicked();
+
 private:
 	/*! Read a specified dxf file.
 		\param drawing VICUS Drawing, where all primitives are added
@@ -65,26 +71,25 @@ private:
 	*/
 	bool readDxfFile(Drawing & drawing, const QString &fname);
 
-	/*! Moves drawings to global coordinate center. */
-	void moveDrawings();
-
 	/*! Fix too big fonts. */
 	void fixFonts();
+
+	void updateImportButtonEnabledState();
 
 	/*! Pointer to UI. */
 	Ui::ImportDXFDialog		*m_ui;
 
 	/*! Last file path. */
-	QString						m_filePath;
+	QString					m_filePath;
 
 	/*! VICUS Drawing with all drawing primitives. */
-	Drawing				m_drawing;
+	Drawing					m_drawing;
 
 	/*! Next VICUS project ID. */
-	unsigned int				m_nextId;
+	unsigned int			m_nextId;
 
 	/*! Return code. */
-	ImportResults				m_returnCode;
+	ImportResults			m_returnCode;
 
 };
 
@@ -99,6 +104,8 @@ class DRW_InterfaceImpl : public DRW_Interface {
 	Drawing::Block		*m_activeBlock	= nullptr;
 
 	unsigned int		*m_nextId		= nullptr;
+
+	bool				m_emptyLayerExists = false;
 
 public :
 

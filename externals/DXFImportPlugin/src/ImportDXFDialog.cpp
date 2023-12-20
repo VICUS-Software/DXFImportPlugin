@@ -20,7 +20,7 @@ ImportDXFDialog::ImportDXFDialog(QWidget *parent) :
 {
 	m_ui->setupUi(this);
 
-	resize(1500, 800);
+	resize(800, 600);
 
 	QString defaultName = tr("Drawing");
 
@@ -37,6 +37,11 @@ ImportDXFDialog::ImportDXFDialog(QWidget *parent) :
 	m_ui->progressBar->setValue(0);
 	m_ui->progressBar->update();
 	m_ui->progressBar->setEnabled(false);
+
+	m_ui->lineEditCustomCenterX->setup(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max(),
+									   tr("Custom center x coordinate"));
+	m_ui->lineEditCustomCenterY->setup(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max(),
+									   tr("Custom center y coordinate"));
 }
 
 ImportDXFDialog::~ImportDXFDialog() {
@@ -61,8 +66,15 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 	if (res == QDialog::Rejected)
 		return ImportCancelled;
 
-	if (m_ui->checkBoxMove->isChecked())
-		moveDrawings();
+	if (m_ui->checkBoxMove->isChecked()) {
+		// set custom origin ?
+		if (m_ui->groupBoxCustomCenter->isChecked())
+			m_drawing.m_origin = IBKMK::Vector3D(- m_ui->lineEditCustomCenterX->value(),
+												 - m_ui->lineEditCustomCenterY->value(),
+												 0);
+		// move to origin
+		m_drawing.moveToOrigin();
+	}
 
 	if (m_ui->checkBoxFixFonts->isChecked())
 		fixFonts();
@@ -78,9 +90,9 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 	m_ui->progressBar->setEnabled(true);
 	m_ui->progressBar->setRange(0,4);
+	m_ui->progressBar->setFormat("Reading file %p%");
 	m_ui->progressBar->setValue(1);
 	m_ui->progressBar->setTextVisible(true);
-	m_ui->progressBar->setFormat("Reading file %p%");
 	m_ui->progressBar->update();
 
 	QString log;
@@ -102,8 +114,9 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		m_ui->progressBar->setFormat("Update References %p%");
 
 		// we need to generate inserted geometries here only in order to find the correct drawing center!
-		m_nextId = 2;
+//		m_nextId = 2;
 //		m_drawing.generateInsertGeometries(m_nextId);
+		m_drawing.sortLayersAlphabetical();
 		m_drawing.updateParents();
 
 		if (!m_ui->checkBoxImportText->isChecked()) {
@@ -115,13 +128,6 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 		if (!success)
 			throw IBK::Exception(IBK::FormatString("Import of DXF-File was not successful!"), FUNC_ID);
-
-		for (Drawing::Arc &arc: m_drawing.m_arcs) {
-			const DrawingLayer *dl = arc.m_parentLayer;
-			if (dl == nullptr) {
-				throw IBK::Exception("arcs", FUNC_ID);
-			}
-		}
 
 		// set name for drawing from lineEdit
 		m_drawing.m_displayName = m_ui->lineEditDrawingName->text();
@@ -154,6 +160,8 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 		// calculate center
 		m_drawing.m_origin = m_drawing.weightedCenter();
+
+//		m_drawing.compensateCoordinates();
 
 		// Drawing should be at least bigger than 150 m
 		double AUTO_SCALING_THRESHOLD = 1000;
@@ -194,6 +202,7 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 	m_ui->plainTextEditLogWindow->setPlainText(log);
 
+	m_ui->progressBar->setFormat("Finished %p%");
 	m_ui->progressBar->setValue(4);
 }
 
@@ -203,10 +212,31 @@ void ImportDXFDialog::on_pushButtonImport_clicked() {
 	accept();
 }
 
+void ImportDXFDialog::on_lineEditCustomCenterX_editingFinished() {
+	updateImportButtonEnabledState();
+}
+
+
+void ImportDXFDialog::on_lineEditCustomCenterY_editingFinished() {
+	updateImportButtonEnabledState();
+}
+
+
+void ImportDXFDialog::on_groupBoxCustomCenter_clicked() {
+	updateImportButtonEnabledState();
+}
+
+void ImportDXFDialog::updateImportButtonEnabledState() {
+	bool valid = true;
+	if (m_ui->groupBoxCustomCenter->isChecked())
+		valid = m_ui->lineEditCustomCenterX->isValid() && m_ui->lineEditCustomCenterY->isValid();
+	m_ui->pushButtonImport->setEnabled(valid);
+}
 
 bool ImportDXFDialog::readDxfFile(Drawing &drawing, const QString &fname) {
 	DRW_InterfaceImpl drwIntImpl(&drawing, m_nextId);
-	dxfRW dxf(fname.toStdString().c_str());
+//	dxfRW dxf(fname.toStdString().c_str());
+	dxfRW dxf(fname.toStdString());
 
 	bool success = dxf.read(&drwIntImpl, false);
 	return success;
@@ -221,9 +251,6 @@ void movePoints(const IBKMK::Vector2D &center, std::vector<t> &objects) {
 	}
 }
 
-void ImportDXFDialog::moveDrawings() {
-	m_drawing.moveToOrigin();
-}
 
 void ImportDXFDialog::fixFonts() {
 	double HEIGHT = 15;
@@ -238,47 +265,9 @@ void ImportDXFDialog::fixFonts() {
 	}
 }
 
-
 const Drawing& ImportDXFDialog::drawing() const {
 	return m_drawing;
 }
-
-
-//template <typename t>
-//void drawingObjectsWeightedCenter(const Drawing &d, const std::vector<t> &drawingObjects, IBKMK::Vector3D &center, unsigned int &numPoints) {
-
-//	for (const t &drawObj : drawingObjects) {
-//		const DrawingLayer *dl = dynamic_cast<const DrawingLayer *>(drawObj.m_parentLayer);
-//		Q_ASSERT(dl != nullptr);
-//		if (!dl->m_visible)
-//			continue;
-
-//		const std::vector<IBKMK::Vector3D> &points = d.points3D(drawObj.points2D(), drawObj.m_zPosition, drawObj.m_trans);
-//		for (const IBKMK::Vector3D &v : points) {
-//			center += v;
-//			numPoints++;
-//		}
-//	}
-//}
-
-
-//void drawingWeightedCenter(const Drawing &d,
-//							IBKMK::Vector3D &center) {
-
-//	unsigned int numPoints = 0;
-//	center = IBKMK::Vector3D();
-//	drawingObjectsWeightedCenter(d, d.m_arcs, center, numPoints);
-//	drawingObjectsWeightedCenter(d, d.m_circles, center, numPoints);
-//	drawingObjectsWeightedCenter(d, d.m_ellipses, center, numPoints);
-//	drawingObjectsWeightedCenter(d, d.m_lines, center, numPoints);
-//	drawingObjectsWeightedCenter(d, d.m_polylines, center, numPoints);
-//	drawingObjectsWeightedCenter(d, d.m_points, center, numPoints);
-//	drawingObjectsWeightedCenter(d, d.m_solids, center, numPoints);
-//	drawingObjectsWeightedCenter(d, d.m_texts, center, numPoints);
-//	drawingObjectsWeightedCenter(d, d.m_linearDimensions, center, numPoints);
-
-//	center /= numPoints;
-//}
 
 
 template <typename t>
@@ -367,6 +356,13 @@ void DRW_InterfaceImpl::addHeader(const DRW_Header* /*data*/){}
 void DRW_InterfaceImpl::addLType(const DRW_LType& /*data*/){}
 void DRW_InterfaceImpl::addLayer(const DRW_Layer& data){
 
+	// only read ONE layer without name
+	if (data.name.empty()) {
+		if (m_emptyLayerExists)
+			return;
+		m_emptyLayerExists = true;
+	}
+
 	// If nullptr return
 	if(m_activeBlock != nullptr)
 		return;
@@ -382,6 +378,9 @@ void DRW_InterfaceImpl::addLayer(const DRW_Layer& data){
 
 	// read linewidth from dxf file, convert to double using lineWidth2dxfInt from libdxfrw
 	newLayer.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
+
+	// is visible?
+	newLayer.m_visible = data.plotF;
 
 	/* value 256 means use defaultColor, value 7 is black */
 	if (data.color != 256 && data.color != 7)
@@ -407,8 +406,6 @@ void DRW_InterfaceImpl::addDimStyle(const DRW_Dimstyle& data) {
 	dimStyle.m_textScalingFactor = data.dimtfac;
 	dimStyle.m_textLinearFactor = data.dimlfac;
 	dimStyle.m_textDecimalPlaces = data.dimdec;
-
-	qDebug() << data.dimlfac;
 
 	dimStyle.m_id = (*m_nextId)++;
 
@@ -905,4 +902,5 @@ void DRW_InterfaceImpl::writeTextstyles(){}
 void DRW_InterfaceImpl::writeVports(){}
 void DRW_InterfaceImpl::writeDimstyles(){}
 void DRW_InterfaceImpl::writeAppId(){}
+
 

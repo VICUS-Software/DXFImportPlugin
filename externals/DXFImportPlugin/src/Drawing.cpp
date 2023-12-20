@@ -11,7 +11,7 @@
 
 #include <tinyxml.h>
 
-int NUMPRECISION = 15;
+int PRECISION = 12;  // precision of floating point values for output writing
 
 /*! IBKMK::Vector3D to QVector3D conversion macro. */
 inline QVector3D IBKVector2QVector(const IBKMK::Vector3D & v) {
@@ -46,6 +46,12 @@ const Drawing::AbstractDrawingObject * Drawing::objectByID(unsigned int id) cons
 		throw IBK::Exception(IBK::FormatString("Drawing Object with ID #%1 not found").arg(id), FUNC_ID);
 
 	return obj;
+}
+
+void Drawing::sortLayersAlphabetical() {
+	std::sort(m_drawingLayers.begin(), m_drawingLayers.end(), [](const DrawingLayer& a, const DrawingLayer& b) {
+		return a.m_displayName < b.m_displayName;
+	});
 }
 
 
@@ -335,8 +341,6 @@ IBKMK::Vector3D Drawing::weightedCenter() const {
 	Q_ASSERT(num>0);
 	center /= num;
 
-//	center = IBKMK::Vector2D(3.33470E+07, 5.63203E+06);
-
 	return IBKMK::Vector3D(center.m_x, center.m_y, 0);
 }
 
@@ -357,18 +361,16 @@ void Drawing::moveToOrigin() {
 
 	IBKMK::Vector2D center(m_origin.m_x, m_origin.m_y);
 
-	updatePointer();
-
 	// collect all parent blocks recursively
-	std::set<const Block*> blocks;
+	std::set<const Block*> parentBlocks;
 	for (Insert &i: m_inserts) {
 		const Block *b = findParentBlock(i);
 		if (b != nullptr)
-			blocks.insert(b);
+			parentBlocks.insert(b);
 	}
 
 	for (Insert &i: m_inserts) {
-		if (blocks.find(i.m_currentBlock) != blocks.end())
+		if (parentBlocks.find(i.m_currentBlock) != parentBlocks.end())
 			i.m_insertionPoint -= center;
 	}
 
@@ -438,6 +440,87 @@ void Drawing::moveToOrigin() {
 
 	// now our origin should be 0,0,0
 	m_origin = IBKMK::Vector3D(0,0,0);
+}
+
+
+void Drawing::compensateCoordinates() {
+
+	std::map<Block*, IBKMK::Vector2D> insertShift;
+
+	for (Insert &i: m_inserts) {
+		if (std::abs(i.m_insertionPoint.m_x) > 1e4 || std::abs(i.m_insertionPoint.m_y) > 1e4) {
+			if (insertShift.find(i.m_currentBlock) == insertShift.end())
+				insertShift[i.m_currentBlock] = i.m_insertionPoint;
+		}
+	}
+
+	if (insertShift.empty())
+		return;
+
+	for (Insert &i: m_inserts) {
+		if (insertShift.find(i.m_currentBlock) != insertShift.end()) {
+			i.m_insertionPoint -= insertShift.at(i.m_currentBlock);
+		}
+	}
+
+	for (Point &p: m_points) {
+		if (insertShift.find(p.m_block) != insertShift.end())
+			p.m_point += insertShift.at(p.m_block);
+	}
+
+	for (Line &l: m_lines) {
+		if (insertShift.find(l.m_block) != insertShift.end()) {
+			l.m_point1 += insertShift.at(l.m_block);
+			l.m_point2 += insertShift.at(l.m_block);
+		}
+	}
+
+	for (PolyLine &pl: m_polylines) {
+		if (insertShift.find(pl.m_block) != insertShift.end()) {
+			for (IBKMK::Vector2D &v: pl.m_polyline)
+				v += insertShift.at(pl.m_block);
+		}
+	}
+
+	for (Circle &c: m_circles) {
+		if (insertShift.find(c.m_block) != insertShift.end())
+			c.m_center += insertShift.at(c.m_block);
+	}
+
+	for (Ellipse &e: m_ellipses) {
+		if (insertShift.find(e.m_block) != insertShift.end())
+			e.m_center += insertShift.at(e.m_block);
+	}
+
+	for (Arc &a: m_arcs) {
+		if (insertShift.find(a.m_block) != insertShift.end())
+			a.m_center += insertShift.at(a.m_block);
+	}
+
+	for (Solid &s: m_solids) {
+		if (insertShift.find(s.m_block) != insertShift.end()) {
+			s.m_point1 += insertShift.at(s.m_block);
+			s.m_point2 += insertShift.at(s.m_block);
+			s.m_point3 += insertShift.at(s.m_block);
+			s.m_point4 += insertShift.at(s.m_block);
+		}
+	}
+
+	for (Text &t: m_texts) {
+		if (insertShift.find(t.m_block) != insertShift.end())
+			t.m_basePoint += insertShift.at(t.m_block);
+	}
+
+	for (LinearDimension &ld: m_linearDimensions) {
+		if (insertShift.find(ld.m_block) != insertShift.end()) {
+			ld.m_dimensionPoint += insertShift.at(ld.m_block);
+			ld.m_leftPoint += insertShift.at(ld.m_block);
+			ld.m_rightPoint += insertShift.at(ld.m_block);
+			ld.m_point1 += insertShift.at(ld.m_block);
+			ld.m_point2 += insertShift.at(ld.m_block);
+			ld.m_textPoint += insertShift.at(ld.m_block);
+		}
+	}
 }
 
 
@@ -530,7 +613,7 @@ TiXmlElement * Drawing::Text::writeXMLPrivate(TiXmlElement * parent) const {
 	if (!m_blockName.isEmpty())
 		e->SetAttribute("blockName", m_blockName.toStdString());
 
-	TiXmlElement::appendSingleAttributeElement(e, "BasePoint", nullptr, std::string(), m_basePoint.toString());
+	TiXmlElement::appendSingleAttributeElement(e, "BasePoint", nullptr, std::string(), m_basePoint.toString(PRECISION));
 
 	return e;
 }
@@ -618,10 +701,10 @@ TiXmlElement * Drawing::Solid::writeXMLPrivate(TiXmlElement * parent) const {
 	if (!m_layerName.isEmpty())
 		e->SetAttribute("layer", m_layerName.toStdString());
 
-	TiXmlElement::appendSingleAttributeElement(e, "Point1", nullptr, std::string(), m_point1.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "Point2", nullptr, std::string(), m_point2.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "Point3", nullptr, std::string(), m_point3.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "Point4", nullptr, std::string(), m_point4.toString());
+	TiXmlElement::appendSingleAttributeElement(e, "Point1", nullptr, std::string(), m_point1.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "Point2", nullptr, std::string(), m_point2.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "Point3", nullptr, std::string(), m_point3.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "Point4", nullptr, std::string(), m_point4.toString(PRECISION));
 
 	return e;
 }
@@ -731,12 +814,12 @@ TiXmlElement * Drawing::LinearDimension::writeXMLPrivate(TiXmlElement * parent) 
 	if (!m_styleName.isEmpty())
 		e->SetAttribute("styleName", m_styleName.toStdString());
 
-	TiXmlElement::appendSingleAttributeElement(e, "Point1", nullptr, std::string(), m_point1.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "Point2", nullptr, std::string(), m_point2.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "DimensionPoint", nullptr, std::string(), m_dimensionPoint.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "LeftPoint", nullptr, std::string(), m_leftPoint.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "RightPoint", nullptr, std::string(), m_rightPoint.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "TextPoint", nullptr, std::string(), m_textPoint.toString());
+	TiXmlElement::appendSingleAttributeElement(e, "Point1", nullptr, std::string(), m_point1.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "Point2", nullptr, std::string(), m_point2.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "DimensionPoint", nullptr, std::string(), m_dimensionPoint.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "LeftPoint", nullptr, std::string(), m_leftPoint.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "RightPoint", nullptr, std::string(), m_rightPoint.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "TextPoint", nullptr, std::string(), m_textPoint.toString(PRECISION));
 
 	return e;
 }
@@ -861,7 +944,7 @@ TiXmlElement * Drawing::Point::writeXMLPrivate(TiXmlElement * parent) const {
 	if (!m_layerName.isEmpty())
 		e->SetAttribute("layer", m_layerName.toStdString());
 
-	TiXmlElement::appendSingleAttributeElement(e, "Point", nullptr, std::string(), m_point.toString());
+	TiXmlElement::appendSingleAttributeElement(e, "Point", nullptr, std::string(), m_point.toString(PRECISION));
 
 	return e;
 }
@@ -1026,8 +1109,8 @@ TiXmlElement * Drawing::Line::writeXMLPrivate(TiXmlElement * parent) const {
 	if (!m_layerName.isEmpty())
 		e->SetAttribute("layer", m_layerName.toStdString());
 
-	TiXmlElement::appendSingleAttributeElement(e, "Point1", nullptr, std::string(), m_point1.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "Point2", nullptr, std::string(), m_point2.toString());
+	TiXmlElement::appendSingleAttributeElement(e, "Point1", nullptr, std::string(), m_point1.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "Point2", nullptr, std::string(), m_point2.toString(PRECISION));
 
 	return e;
 }
@@ -1048,8 +1131,8 @@ TiXmlElement * Drawing::Circle::writeXMLPrivate(TiXmlElement * parent) const {
 	if (!m_layerName.isEmpty())
 		e->SetAttribute("layer", m_layerName.toStdString());
 
-	TiXmlElement::appendSingleAttributeElement(e, "Center", nullptr, std::string(), m_center.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "Radius", nullptr, std::string(), IBK::val2string<double>(m_radius));
+	TiXmlElement::appendSingleAttributeElement(e, "Center", nullptr, std::string(), m_center.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "Radius", nullptr, std::string(), IBK::val2string<double>(m_radius, PRECISION));
 
 	return e;
 }
@@ -1146,9 +1229,8 @@ TiXmlElement * Drawing::PolyLine::writeXMLPrivate(TiXmlElement * parent) const {
 
 		std::stringstream vals;
 		const std::vector<IBKMK::Vector2D> & polyVertexes = m_polyline;
-
 		for (unsigned int i=0; i<polyVertexes.size(); ++i) {
-			vals << std::setprecision(NUMPRECISION) << polyVertexes[i].m_x << " " << polyVertexes[i].m_y;
+			vals << polyVertexes[i].toString(PRECISION);
 			if (i<polyVertexes.size()-1)  vals << ", ";
 		}
 		TiXmlText * text = new TiXmlText( vals.str() );
@@ -1253,10 +1335,10 @@ TiXmlElement * Drawing::Arc::writeXMLPrivate(TiXmlElement * parent) const {
 	if (!m_layerName.isEmpty())
 		e->SetAttribute("layer", m_layerName.toStdString());
 
-	TiXmlElement::appendSingleAttributeElement(e, "Center", nullptr, std::string(), m_center.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "Radius", nullptr, std::string(), IBK::val2string<double>(m_radius));
-	TiXmlElement::appendSingleAttributeElement(e, "StartAngle", nullptr, std::string(), IBK::val2string<double>(m_startAngle));
-	TiXmlElement::appendSingleAttributeElement(e, "EndAngle", nullptr, std::string(), IBK::val2string<double>(m_endAngle));
+	TiXmlElement::appendSingleAttributeElement(e, "Center", nullptr, std::string(), m_center.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "Radius", nullptr, std::string(), IBK::val2string<double>(m_radius, PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "StartAngle", nullptr, std::string(), IBK::val2string<double>(m_startAngle, PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "EndAngle", nullptr, std::string(), IBK::val2string<double>(m_endAngle, PRECISION));
 
 	return e;
 }
@@ -1365,11 +1447,11 @@ TiXmlElement * Drawing::Ellipse::writeXMLPrivate(TiXmlElement * parent) const {
 	if (!m_layerName.isEmpty())
 		e->SetAttribute("layer", m_layerName.toStdString());
 
-	TiXmlElement::appendSingleAttributeElement(e, "Center", nullptr, std::string(), m_center.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "MajorAxis", nullptr, std::string(), m_majorAxis.toString());
-	TiXmlElement::appendSingleAttributeElement(e, "Ratio", nullptr, std::string(), IBK::val2string<double>(m_ratio));
-	TiXmlElement::appendSingleAttributeElement(e, "StartAngle", nullptr, std::string(), IBK::val2string<double>(m_startAngle));
-	TiXmlElement::appendSingleAttributeElement(e, "EndAngle", nullptr, std::string(), IBK::val2string<double>(m_endAngle));
+	TiXmlElement::appendSingleAttributeElement(e, "Center", nullptr, std::string(), m_center.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "MajorAxis", nullptr, std::string(), m_majorAxis.toString(PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "Ratio", nullptr, std::string(), IBK::val2string<double>(m_ratio, PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "StartAngle", nullptr, std::string(), IBK::val2string<double>(m_startAngle, PRECISION));
+	TiXmlElement::appendSingleAttributeElement(e, "EndAngle", nullptr, std::string(), IBK::val2string<double>(m_endAngle, PRECISION));
 
 	return e;
 }
@@ -1579,7 +1661,7 @@ TiXmlElement * Drawing::Block::writeXML(TiXmlElement * parent) const {
 	if (m_lineWeight > 0)
 		e->SetAttribute("lineWeight", IBK::val2string<int>(m_lineWeight));
 
-	TiXmlElement::appendSingleAttributeElement(e, "basePoint", nullptr, std::string(), m_basePoint.toString());
+	TiXmlElement::appendSingleAttributeElement(e, "basePoint", nullptr, std::string(), m_basePoint.toString(PRECISION));
 
 	return e;
 }
@@ -1658,7 +1740,7 @@ TiXmlElement *Drawing::Insert::writeXML(TiXmlElement *parent) const {
 	if (m_zScale != 1.0)
 		e->SetAttribute("zScale", IBK::val2string<double>(m_zScale));
 
-	TiXmlElement::appendSingleAttributeElement(e, "insertionPoint", nullptr, std::string(), m_insertionPoint.toString());
+	TiXmlElement::appendSingleAttributeElement(e, "insertionPoint", nullptr, std::string(), m_insertionPoint.toString(PRECISION));
 
 	return e;
 }
@@ -1729,7 +1811,7 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 	if (m_visible != Drawing().m_visible)
 		e->SetAttribute("visible", IBK::val2string<bool>(m_visible));
 
-	TiXmlElement::appendSingleAttributeElement(e, "Origin", nullptr, std::string(), m_origin.toString());
+	TiXmlElement::appendSingleAttributeElement(e, "Origin", nullptr, std::string(), m_origin.toString(PRECISION));
 
 	m_rotationMatrix.writeXML(e);
 
