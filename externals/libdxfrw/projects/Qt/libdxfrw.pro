@@ -6,11 +6,18 @@ TARGET = libdxfrw
 # it contains all functions defined for casual libraries
 include( ../../../IBK/projects/Qt/IBK.pri )
 
+LIBS += -lIBK
+
+
+INCLUDEPATH = \
+../../../IBK/src
+
 INCLUDEPATH += \
+../../../IBK/src
 
 HEADERS += \
 ../../src/drw_classes.h \
-	../../src/drw_entities.h \
+../../src/drw_entities.h \
 	../../src/drw_header.h \
 	../../src/drw_interface.h \
 	../../src/drw_objects.h \
@@ -38,7 +45,7 @@ HEADERS += \
 
 SOURCES += \
 ../../src/drw_classes.cpp \
-	../../src/drw_entities.cpp \
+../../src/drw_entities.cpp \
 	../../src/drw_header.cpp \
 	../../src/drw_objects.cpp \
 	../../src/intern/drw_dbg.cpp \

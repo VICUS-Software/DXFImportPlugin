@@ -11,7 +11,7 @@
 
 #include <tinyxml.h>
 
-int PRECISION = 12;  // precision of floating point values for output writing
+static int PRECISION = 15;  // precision of floating point values for output writing
 
 /*! IBKMK::Vector3D to QVector3D conversion macro. */
 inline QVector3D IBKVector2QVector(const IBKMK::Vector3D & v) {
@@ -59,13 +59,13 @@ void Drawing::updatePointer() {
 	FUNCID(Drawing::updatePointer);
 	m_objectPtr.clear();
 
-	// map layer name to reference, this avoids nested loops
+	// map layer name to reference initially for improved performance
 	std::map<QString, const DrawingLayer*> layerRefs;
 	for (const DrawingLayer &dl: m_drawingLayers) {
 		layerRefs[dl.m_displayName] = &dl;
 	}
 
-	// map block name to reference, also avoids nested loops
+	// map block name to reference initially for improved performance
 	std::map<QString, Block*> blockRefs;
 	blockRefs[""] = nullptr; // This is just in case. But actually blocks without name should not exist
 	for (Block &b: m_blocks) {

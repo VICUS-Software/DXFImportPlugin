@@ -21,7 +21,11 @@
 #include "intern/dxfwriter.h"
 #include "intern/drw_dbg.h"
 
+#include <IBK_FileUtils.h>
+#include <IBK_Path.h>
+
 #define FIRSTHANDLE 48
+
 
 /*enum sections {
 	secUnknown,
@@ -69,7 +73,11 @@ bool dxfRW::read(DRW_Interface *interface_, bool ext){
 	if ( interface_ == NULL )
 				return isOk;
 	DRW_DBG("dxfRW::read 1def\n");
-	filestr.open (fileName, std::ios_base::in | std::ios::binary);
+//	filestr.open (fileName, std::ios_base::in | std::ios::binary);
+
+	// Replaced original code with IBK function to account for UTF-8
+	IBK::open_ifstream(filestr, IBK::Path(fileName), std::ios_base::in | std::ios::binary);
+
 	if (!filestr.is_open())
 		return isOk;
 	if (!filestr.good())
@@ -84,7 +92,11 @@ bool dxfRW::read(DRW_Interface *interface_, bool ext){
 	iface = interface_;
 	DRW_DBG("dxfRW::read 2\n");
 	if (strcmp(line, line2) == 0) {
-		filestr.open (fileName, std::ios_base::in | std::ios::binary);
+//		filestr.open (fileName, std::ios_base::in | std::ios::binary);
+
+		// Replaced original code with IBK function to account for UTF-8
+		IBK::open_ifstream(filestr, IBK::Path(fileName), std::ios_base::in | std::ios::binary);
+
 		binFile = true;
 		//skip sentinel
 		filestr.seekg (22, std::ios::beg);
@@ -92,7 +104,11 @@ bool dxfRW::read(DRW_Interface *interface_, bool ext){
 		DRW_DBG("dxfRW::read binary file\n");
 	} else {
 		binFile = false;
-		filestr.open (fileName, std::ios_base::in);
+//		filestr.open (fileName, std::ios_base::in);
+
+		// Replaced original code with IBK function to account for UTF-8
+		IBK::open_ifstream(filestr, IBK::Path(fileName), std::ios_base::in);
+
 		reader = new dxfReaderAscii(&filestr);
 	}
 
