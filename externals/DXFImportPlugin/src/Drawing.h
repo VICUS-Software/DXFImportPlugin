@@ -432,6 +432,7 @@ public:
 	/*! Subtracts the origon from all coordinates */
 	void moveToOrigin();
 
+	/*! updates insert Points to reduce offset */
 	void compensateCoordinates();
 
 	/*! point of origin */
@@ -479,6 +480,8 @@ private:
 
 	const Block *findParentBlock(const Insert &i) const;
 
+	const Block *findParentBlockByBlock(Block & block) const;
+
 	/*! Helper function to assign the correct layer to an entity */
 	DrawingLayer *findLayerPointer(const QString &layername);
 
@@ -501,7 +504,6 @@ private:
 
 	/*! Mark if pick points have to be recalculated. */
 	mutable bool													m_dirtyPickPoints = true;
-
 };
 
 

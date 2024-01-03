@@ -74,6 +74,9 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 												 0);
 		// move to origin
 		m_drawing.moveToOrigin();
+
+		// calculates optimal position of insertion Points
+		m_drawing.compensateCoordinates();
 	}
 
 	if (m_ui->checkBoxFixFonts->isChecked())

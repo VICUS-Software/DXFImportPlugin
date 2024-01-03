@@ -356,6 +356,14 @@ const Drawing::Block *Drawing::findParentBlock(const Insert &i) const {
 	return i.m_parentBlock;
 }
 
+const Drawing::Block *Drawing::findParentBlockByBlock(Block &block) const {
+	for (const Insert &pIn: m_inserts) {
+		if (&block == pIn.m_currentBlock) {
+			return findParentBlock(pIn);
+		}
+	}
+	return &block;
+}
 
 void Drawing::moveToOrigin() {
 
@@ -445,81 +453,177 @@ void Drawing::moveToOrigin() {
 
 void Drawing::compensateCoordinates() {
 
-	std::map<Block*, IBKMK::Vector2D> insertShift;
-
 	for (Insert &i: m_inserts) {
-		if (std::abs(i.m_insertionPoint.m_x) > 1e4 || std::abs(i.m_insertionPoint.m_y) > 1e4) {
-			if (insertShift.find(i.m_currentBlock) == insertShift.end())
-				insertShift[i.m_currentBlock] = i.m_insertionPoint;
+		Block *currentBlock = i.m_currentBlock;
+		IBKMK::Vector2D	averageAccumulation(0,0);
+		unsigned int cnt = 0;
+
+		// iterate over all elements, accumulate the coordinates
+		for (Point &p: m_points) {
+			if (p.m_block == currentBlock) {
+				averageAccumulation += p.m_point;
+				++cnt;
+			}
 		}
-	}
 
-	if (insertShift.empty())
-		return;
-
-	for (Insert &i: m_inserts) {
-		if (insertShift.find(i.m_currentBlock) != insertShift.end()) {
-			i.m_insertionPoint -= insertShift.at(i.m_currentBlock);
+		for (Line &l: m_lines) {
+			if (l.m_block == currentBlock) {
+				IBKMK::Vector2D averageLineAccumulation = l.m_point1 + l.m_point2;
+				averageLineAccumulation /= 2;
+				averageAccumulation += averageLineAccumulation;
+				++cnt;
+			}
 		}
-	}
 
-	for (Point &p: m_points) {
-		if (insertShift.find(p.m_block) != insertShift.end())
-			p.m_point += insertShift.at(p.m_block);
-	}
-
-	for (Line &l: m_lines) {
-		if (insertShift.find(l.m_block) != insertShift.end()) {
-			l.m_point1 += insertShift.at(l.m_block);
-			l.m_point2 += insertShift.at(l.m_block);
+		for (PolyLine &pl: m_polylines) {
+			if (pl.m_block == currentBlock) {
+				unsigned int polyLineCounter;
+				IBKMK::Vector2D polyLineAccumulation(0,0);
+				for (IBKMK::Vector2D &v: pl.m_polyline) {
+					polyLineAccumulation += v;
+					++polyLineCounter;
+				}
+				polyLineAccumulation /= polyLineCounter;
+				averageAccumulation += polyLineAccumulation;
+				++cnt;
+			}
 		}
-	}
 
-	for (PolyLine &pl: m_polylines) {
-		if (insertShift.find(pl.m_block) != insertShift.end()) {
-			for (IBKMK::Vector2D &v: pl.m_polyline)
-				v += insertShift.at(pl.m_block);
+		for (Circle &c: m_circles) {
+			if (c.m_block == currentBlock) {
+				averageAccumulation += c.m_center;
+				++cnt;
+			}
 		}
-	}
 
-	for (Circle &c: m_circles) {
-		if (insertShift.find(c.m_block) != insertShift.end())
-			c.m_center += insertShift.at(c.m_block);
-	}
-
-	for (Ellipse &e: m_ellipses) {
-		if (insertShift.find(e.m_block) != insertShift.end())
-			e.m_center += insertShift.at(e.m_block);
-	}
-
-	for (Arc &a: m_arcs) {
-		if (insertShift.find(a.m_block) != insertShift.end())
-			a.m_center += insertShift.at(a.m_block);
-	}
-
-	for (Solid &s: m_solids) {
-		if (insertShift.find(s.m_block) != insertShift.end()) {
-			s.m_point1 += insertShift.at(s.m_block);
-			s.m_point2 += insertShift.at(s.m_block);
-			s.m_point3 += insertShift.at(s.m_block);
-			s.m_point4 += insertShift.at(s.m_block);
+		for (Ellipse &e: m_ellipses) {
+			if (e.m_block == currentBlock) {
+				averageAccumulation += e.m_center;
+				++cnt;
+			}
 		}
-	}
 
-	for (Text &t: m_texts) {
-		if (insertShift.find(t.m_block) != insertShift.end())
-			t.m_basePoint += insertShift.at(t.m_block);
-	}
-
-	for (LinearDimension &ld: m_linearDimensions) {
-		if (insertShift.find(ld.m_block) != insertShift.end()) {
-			ld.m_dimensionPoint += insertShift.at(ld.m_block);
-			ld.m_leftPoint += insertShift.at(ld.m_block);
-			ld.m_rightPoint += insertShift.at(ld.m_block);
-			ld.m_point1 += insertShift.at(ld.m_block);
-			ld.m_point2 += insertShift.at(ld.m_block);
-			ld.m_textPoint += insertShift.at(ld.m_block);
+		for (Arc &a: m_arcs) {
+			if (a.m_block == currentBlock) {
+				averageAccumulation += a.m_center;
+				++cnt;
+			}
 		}
+
+		for (Solid &s: m_solids) {
+			if (s.m_block == currentBlock) {
+				IBKMK::Vector2D averageSolidAccumulation = s.m_point1 + s.m_point2 + s.m_point3 + s.m_point4;
+				averageSolidAccumulation /= 4;
+				averageAccumulation += averageSolidAccumulation;
+				+cnt;
+			}
+		}
+
+		for (Text &t: m_texts) {
+			if (t.m_block == currentBlock) {
+				averageAccumulation += t.m_basePoint;
+				++cnt;
+			}
+		}
+
+		for (LinearDimension &ld: m_linearDimensions) {
+			if (ld.m_block == currentBlock) {
+				IBKMK::Vector2D averageLinearDimensionAccumulation = ld.m_dimensionPoint + ld.m_leftPoint
+								+ ld.m_rightPoint + ld.m_point1 + ld.m_point2 + ld.m_textPoint;
+				averageLinearDimensionAccumulation /= 6;
+				averageAccumulation += averageLinearDimensionAccumulation;
+				++cnt;
+			}
+		}
+
+		// calculate the average of all elements attached to current Insert Point
+		averageAccumulation /= cnt;
+		IBKMK::Vector2D newInsertPoint = i.m_insertionPoint + averageAccumulation;
+
+
+		// update all coordinates of elements attached to insert point. Also update insert points of all blocks attached to current block
+		// newElementPoint = oldElementPoint + oldInsertPoint - newInsertPoint
+
+		// calculates delta of oldInsertPoint and newInsertPoint for simplified calculation
+		IBKMK::Vector2D deltaInsertPoint = i.m_insertionPoint - newInsertPoint;
+
+
+		for (Point &p: m_points) {
+			if (p.m_block == currentBlock) {
+				p.m_point += deltaInsertPoint;
+			}
+		}
+
+		for (Line &l: m_lines) {
+			if (l.m_block == currentBlock) {
+				l.m_point1 += deltaInsertPoint;
+				l.m_point2 += deltaInsertPoint;
+			}
+		}
+
+		for (PolyLine &pl: m_polylines) {
+			if (pl.m_block == currentBlock) {
+				for (IBKMK::Vector2D &v: pl.m_polyline) {
+					v += deltaInsertPoint;
+				}
+			}
+		}
+
+		for (Circle &c: m_circles) {
+			if (c.m_block == currentBlock) {
+				c.m_center += deltaInsertPoint;
+			}
+		}
+
+		for (Ellipse &e: m_ellipses) {
+			if (e.m_block == currentBlock) {
+				e.m_center += deltaInsertPoint;
+			}
+		}
+
+		for (Arc &a: m_arcs) {
+			if (a.m_block == currentBlock) {
+				a.m_center += deltaInsertPoint;
+			}
+		}
+
+		for (Solid &s: m_solids) {
+			if (s.m_block == currentBlock) {
+				s.m_point1 += deltaInsertPoint;
+				s.m_point2 += deltaInsertPoint;
+				s.m_point3 += deltaInsertPoint;
+				s.m_point4 += deltaInsertPoint;
+			}
+		}
+
+		for (Text &t: m_texts) {
+			if (t.m_block == currentBlock) {
+				t.m_basePoint += deltaInsertPoint;
+			}
+		}
+
+		for (LinearDimension &ld: m_linearDimensions) {
+			if (ld.m_block == currentBlock) {
+				IBKMK::Vector2D averageLinearDimensionAccumulation = ld.m_dimensionPoint + ld.m_leftPoint
+																	 + ld.m_rightPoint + ld.m_point1 + ld.m_point2 + ld.m_textPoint;
+				ld.m_dimensionPoint += deltaInsertPoint;
+				ld.m_leftPoint += deltaInsertPoint;
+				ld.m_rightPoint += deltaInsertPoint;
+				ld.m_point1 += deltaInsertPoint;
+				ld.m_point2 += deltaInsertPoint;
+				ld.m_textPoint += deltaInsertPoint;
+			}
+		}
+
+		for (Insert &ic: m_inserts){
+			if(ic.m_parentBlock == i.m_currentBlock) {
+				ic.m_insertionPoint += deltaInsertPoint;
+			}
+		}
+
+
+		// now update this insertPoint
+		i.m_insertionPoint = newInsertPoint;
 	}
 }
 
