@@ -473,9 +473,9 @@ void DRW_InterfaceImpl::addBlock(const DRW_Block& data){
 
 void DRW_InterfaceImpl::setBlock(const int /*handle*/){}
 void DRW_InterfaceImpl::endBlock(){
+	m_activeBlock->m_basePoint = IBKMK::Vector2D(0,0);
 	// Active block not existing
 	m_activeBlock = nullptr;
-
 }
 
 
@@ -491,9 +491,10 @@ void DRW_InterfaceImpl::addPoint(const DRW_Point& data){
 	newPoint.m_layerName = QString::fromStdString(data.layer);
 
 	newPoint.m_id = (*m_nextId)++;
-	if (m_activeBlock != nullptr)
+	if (m_activeBlock != nullptr) {
 		newPoint.m_blockName = m_activeBlock->m_name;
-
+		newPoint.m_point += m_activeBlock->m_basePoint;
+	}
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
 		newPoint.m_color = QColor(DRW::dxfColors[data.color][0], DRW::dxfColors[data.color][1], DRW::dxfColors[data.color][2]);
@@ -518,9 +519,11 @@ void DRW_InterfaceImpl::addLine(const DRW_Line& data){
 	newLine.m_layerName = QString::fromStdString(data.layer);
 
 	newLine.m_id = (*m_nextId)++;
-	if (m_activeBlock != nullptr)
+	if (m_activeBlock != nullptr) {
 		newLine.m_blockName = m_activeBlock->m_name;
-
+		newLine.m_point1 += m_activeBlock->m_basePoint;
+		newLine.m_point2 += m_activeBlock->m_basePoint;
+	}
 	/* value 256 means use defaultColor, value 7 is black */
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -548,8 +551,10 @@ void DRW_InterfaceImpl::addArc(const DRW_Arc& data){
 	newArc.m_layerName = QString::fromStdString(data.layer);
 
 	newArc.m_id = (*m_nextId)++;
-	if (m_activeBlock != nullptr)
+	if (m_activeBlock != nullptr) {
 		newArc.m_blockName = m_activeBlock->m_name;
+		newArc.m_center += m_activeBlock->m_basePoint;
+	}
 
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -563,8 +568,6 @@ void DRW_InterfaceImpl::addArc(const DRW_Arc& data){
 
 void DRW_InterfaceImpl::addCircle(const DRW_Circle& data){
 
-
-
 	Drawing::Circle newCircle;
 	newCircle.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
@@ -576,8 +579,10 @@ void DRW_InterfaceImpl::addCircle(const DRW_Circle& data){
 	newCircle.m_layerName = QString::fromStdString(data.layer);
 
 	newCircle.m_id = (*m_nextId)++;
-	if (m_activeBlock != nullptr)
+	if (m_activeBlock != nullptr) {
 		newCircle.m_blockName = m_activeBlock->m_name;
+		newCircle.m_center += m_activeBlock->m_basePoint;
+	}
 
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -604,8 +609,10 @@ void DRW_InterfaceImpl::addEllipse(const DRW_Ellipse& data){
 	newEllipse.m_layerName = QString::fromStdString(data.layer);
 
 	newEllipse.m_id = (*m_nextId)++;
-	if (m_activeBlock != nullptr)
+	if (m_activeBlock != nullptr) {
 		newEllipse.m_blockName = m_activeBlock->m_name;
+		newEllipse.m_center += m_activeBlock->m_basePoint;
+	}
 
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -627,14 +634,20 @@ void DRW_InterfaceImpl::addLWPolyline(const DRW_LWPolyline& data){
 	newPolyline.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
 
 	newPolyline.m_id = (*m_nextId)++;
-	if (m_activeBlock != nullptr)
-		newPolyline.m_blockName = m_activeBlock->m_name;
 
 	// iterate over data.vertlist, insert all vertices of Polyline into vector
 	for(size_t i = 0; i < data.vertlist.size(); i++){
 		IBKMK::Vector2D point(data.vertlist[i]->x, data.vertlist[i]->y);
 		newPolyline.m_polyline.push_back(point);
 	}
+
+	if (m_activeBlock != nullptr) {
+		newPolyline.m_blockName = m_activeBlock->m_name;
+		for(IBKMK::Vector2D &pl : newPolyline.m_polyline){
+			pl += m_activeBlock->m_basePoint;
+		}
+	}
+
 
 	newPolyline.m_layerName = QString::fromStdString(data.layer);
 
@@ -661,6 +674,9 @@ void DRW_InterfaceImpl::addPolyline(const DRW_Polyline& data){
 	// iterateover data.vertlist, insert all vertices of Polyline into vector
 	for(size_t i = 0; i < data.vertlist.size(); i++){
 		IBKMK::Vector2D point(data.vertlist[i]->basePoint.x, data.vertlist[i]->basePoint.y);
+		if(m_activeBlock != nullptr) {
+			point += m_activeBlock->m_basePoint;
+		}
 		newPolyline.m_polyline.push_back(point);
 	}
 
@@ -700,8 +716,10 @@ void DRW_InterfaceImpl::addInsert(const DRW_Insert& data){
 	newInsert.m_zScale = data.zscale;
 
 	newInsert.m_insertionPoint = IBKMK::Vector2D(data.basePoint.x, data.basePoint.y);
-	if (m_activeBlock != nullptr)
+	if (m_activeBlock != nullptr) {
 		newInsert.m_parentBlockName = m_activeBlock->m_name;
+		newInsert.m_insertionPoint += m_activeBlock->m_basePoint;
+	}
 
 	m_drawing->m_inserts.push_back(newInsert);
 }
@@ -723,8 +741,13 @@ void DRW_InterfaceImpl::addSolid(const DRW_Solid& data){
 	newSolid.m_layerName = QString::fromStdString(data.layer);
 
 	newSolid.m_id = (*m_nextId)++;
-	if (m_activeBlock != nullptr)
+	if (m_activeBlock != nullptr) {
 		newSolid.m_blockName = m_activeBlock->m_name;
+		newSolid.m_point1 += m_activeBlock->m_basePoint;
+		newSolid.m_point2 += m_activeBlock->m_basePoint;
+		newSolid.m_point3 += m_activeBlock->m_basePoint;
+		newSolid.m_point4 += m_activeBlock->m_basePoint;
+	}
 
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -761,8 +784,10 @@ void DRW_InterfaceImpl::addMText(const DRW_MText& data){
 	newText.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
 	newText.m_id = (*m_nextId)++;
-	if (m_activeBlock != nullptr)
+	if (m_activeBlock != nullptr) {
 		newText.m_blockName = m_activeBlock->m_name;
+		newText.m_basePoint += m_activeBlock->m_basePoint;
+	}
 
 	newText.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
 	newText.m_layerName = QString::fromStdString(data.layer);
@@ -787,8 +812,10 @@ void DRW_InterfaceImpl::addText(const DRW_Text& data){
 	newText.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
 	newText.m_id = (*m_nextId)++;
-	if (m_activeBlock != nullptr)
+	if (m_activeBlock != nullptr) {
 		newText.m_blockName = m_activeBlock->m_name;
+		newText.m_basePoint += m_activeBlock->m_basePoint;
+	}
 
 	newText.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
 	newText.m_layerName = QString::fromStdString(data.layer);
@@ -826,8 +853,13 @@ void DRW_InterfaceImpl::addDimLinear(const DRW_DimLinear *data){
 	newLinearDimension.m_zPosition = m_drawing->m_zCounter;
 	m_drawing->m_zCounter++;
 	newLinearDimension.m_id = (*m_nextId)++;
-	if (m_activeBlock != nullptr)
+	if (m_activeBlock != nullptr) {
 		newLinearDimension.m_blockName = m_activeBlock->m_name;
+		def += m_activeBlock->m_basePoint;
+		def1 += m_activeBlock->m_basePoint;
+		def2 += m_activeBlock->m_basePoint;
+		text += m_activeBlock->m_basePoint;
+	}
 
 	newLinearDimension.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data->lWeight);
 	newLinearDimension.m_layerName = QString::fromStdString(data->layer);
