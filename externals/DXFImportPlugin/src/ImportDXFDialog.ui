@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>604</width>
-    <height>580</height>
+    <height>739</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -20,6 +20,16 @@
    <string>Dialog</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="4" column="0" colspan="2">
+    <widget class="QProgressBar" name="progressBar">
+     <property name="value">
+      <number>24</number>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="lineEditDrawingName"/>
+   </item>
    <item row="3" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
@@ -50,6 +60,95 @@
      </item>
     </layout>
    </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Settings</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="1" column="1">
+       <widget class="QLabel" name="labelX">
+        <property name="text">
+         <string>x</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="labelY">
+        <property name="text">
+         <string>y</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QCheckBox" name="checkBoxImportText">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string>Import Text (experimental)</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="checkBoxCustomOrigin">
+        <property name="text">
+         <string>Specify custom origin:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="checkBoxMove">
+        <property name="text">
+         <string>Move drawing to origin</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2" colspan="3">
+       <widget class="QtExt::ValidatingLineEdit" name="lineEditCustomCenterY"/>
+      </item>
+      <item row="2" column="2" colspan="3">
+       <widget class="QtExt::ValidatingLineEdit" name="lineEditCustomCenterX"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="comboBoxUnit"/>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Scaling unit:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Name:</string>
+     </property>
+    </widget>
+   </item>
    <item row="8" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout_6">
      <item>
@@ -74,125 +173,8 @@
      </item>
     </layout>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Scaling unit:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Name:</string>
-     </property>
-    </widget>
-   </item>
    <item row="5" column="0" colspan="2">
     <widget class="QPlainTextEdit" name="plainTextEditLogWindow"/>
-   </item>
-   <item row="2" column="0" colspan="2">
-    <widget class="QGroupBox" name="groupBox">
-     <property name="title">
-      <string>Settings</string>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QCheckBox" name="checkBoxFixFonts">
-        <property name="text">
-         <string>Fix too big text fonts</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkBoxMove">
-        <property name="text">
-         <string>Move drawing to origin</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkBoxImportText">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string>Import Text (experimental)</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="4" column="0" colspan="2">
-    <widget class="QProgressBar" name="progressBar">
-     <property name="value">
-      <number>24</number>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QLineEdit" name="lineEditDrawingName"/>
-   </item>
-   <item row="1" column="1">
-    <widget class="QComboBox" name="comboBoxUnit"/>
-   </item>
-   <item row="7" column="0" colspan="2">
-    <widget class="QGroupBox" name="groupBoxCustomCenter">
-     <property name="title">
-      <string>Specify custom origin</string>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-     <property name="checked">
-      <bool>false</bool>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>x</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QtExt::ValidatingLineEdit" name="lineEditCustomCenterX"/>
-      </item>
-      <item row="1" column="1">
-       <widget class="QtExt::ValidatingLineEdit" name="lineEditCustomCenterY"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>y</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
    </item>
   </layout>
  </widget>

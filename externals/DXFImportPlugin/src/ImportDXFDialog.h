@@ -63,6 +63,10 @@ private slots:
 
 	void on_groupBoxCustomCenter_clicked();
 
+	void on_checkBoxMove_clicked(bool checked);
+
+	void on_checkBoxCustomOrigin_stateChanged(int arg1);
+
 private:
 	/*! Read a specified dxf file.
 		\param drawing VICUS Drawing, where all primitives are added

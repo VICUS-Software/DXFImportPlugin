@@ -2,6 +2,7 @@
 #include "ui_ImportDXFDialog.h"
 
 #include <QMessageBox>
+#include <QFileInfo>
 
 #include <regex>
 
@@ -32,7 +33,7 @@ ImportDXFDialog::ImportDXFDialog(QWidget *parent) :
 	m_ui->comboBoxUnit->addItem("Centimeter", SU_Centimeter);
 	m_ui->comboBoxUnit->addItem("Millimeter", SU_Millimeter);
 
-	m_ui->checkBoxFixFonts->setHidden(true);
+//	m_ui->checkBoxFixFonts->setHidden(true);
 
 	m_ui->progressBar->setValue(0);
 	m_ui->progressBar->update();
@@ -60,7 +61,8 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 	m_ui->pushButtonImport->setEnabled(false);
 	m_filePath = fname;
 
-	m_ui->lineEditDrawingName->setText(fname);
+	QFileInfo finfo(fname);
+	m_ui->lineEditDrawingName->setText(finfo.fileName());
 
 	int res = exec();
 	if (res == QDialog::Rejected)
@@ -68,7 +70,7 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 
 	if (m_ui->checkBoxMove->isChecked()) {
 		// set custom origin ?
-		if (m_ui->groupBoxCustomCenter->isChecked())
+		if (m_ui->checkBoxCustomOrigin->isChecked())
 			m_drawing.m_origin = IBKMK::Vector3D(- m_ui->lineEditCustomCenterX->value(),
 												 - m_ui->lineEditCustomCenterY->value(),
 												 0);
@@ -79,8 +81,8 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 		m_drawing.compensateCoordinates();
 	}
 
-	if (m_ui->checkBoxFixFonts->isChecked())
-		fixFonts();
+//	if (m_ui->checkBoxFixFonts->isChecked())
+	fixFonts();
 
 	m_ui->plainTextEditLogWindow->clear();
 
@@ -229,12 +231,28 @@ void ImportDXFDialog::on_groupBoxCustomCenter_clicked() {
 	updateImportButtonEnabledState();
 }
 
+
+void ImportDXFDialog::on_checkBoxMove_clicked(bool checked) {
+	m_ui->checkBoxCustomOrigin->setEnabled(checked);
+	if (!checked)
+		m_ui->checkBoxCustomOrigin->setChecked(false);
+	on_checkBoxCustomOrigin_stateChanged(checked);
+}
+
+void ImportDXFDialog::on_checkBoxCustomOrigin_stateChanged(int arg1) {
+	m_ui->labelX->setEnabled(arg1);
+	m_ui->labelY->setEnabled(arg1);
+	m_ui->lineEditCustomCenterX->setEnabled(arg1);
+	m_ui->lineEditCustomCenterY->setEnabled(arg1);
+}
+
 void ImportDXFDialog::updateImportButtonEnabledState() {
 	bool valid = true;
-	if (m_ui->groupBoxCustomCenter->isChecked())
+	if (m_ui->checkBoxCustomOrigin->isChecked())
 		valid = m_ui->lineEditCustomCenterX->isValid() && m_ui->lineEditCustomCenterY->isValid();
 	m_ui->pushButtonImport->setEnabled(valid);
 }
+
 
 bool ImportDXFDialog::readDxfFile(Drawing &drawing, const QString &fname) {
 	DRW_InterfaceImpl drwIntImpl(&drawing, m_nextId);
@@ -905,5 +923,7 @@ void DRW_InterfaceImpl::writeTextstyles(){}
 void DRW_InterfaceImpl::writeVports(){}
 void DRW_InterfaceImpl::writeDimstyles(){}
 void DRW_InterfaceImpl::writeAppId(){}
+
+
 
 
