@@ -331,6 +331,7 @@ IBKMK::Vector3D Drawing::weightedCenter() const {
 
 	for(const Insert &i : m_inserts) {
 		if(i.m_parentBlock == nullptr) {
+			averageAccumulation += i.m_currentBlock->m_basePoint;
 			averageAccumulation += i.m_insertionPoint;
 			++cnt;
 		}
@@ -361,6 +362,7 @@ const Drawing::Block *Drawing::findParentBlockByBlock(Block &block) const {
 	}
 	return &block;
 }
+
 
 void Drawing::moveToOrigin() {
 
@@ -438,6 +440,9 @@ void Drawing::moveToOrigin() {
 			ic.m_insertionPoint -= origin;
 		}
 	}
+
+	// we have shifted to 0,0 now
+	m_origin = IBKMK::Vector3D(0,0,0);
 }
 
 
@@ -451,6 +456,7 @@ void Drawing::compensateCoordinates() {
 		// iterate over all elements, accumulate the coordinates
 		for (Point &p: m_points) {
 			if (p.m_block == currentBlock) {
+				averageAccumulation += p.m_block->m_basePoint;
 				averageAccumulation += p.m_point;
 				++cnt;
 			}
@@ -505,7 +511,7 @@ void Drawing::compensateCoordinates() {
 				IBKMK::Vector2D averageSolidAccumulation = s.m_point1 + s.m_point2 + s.m_point3 + s.m_point4;
 				averageSolidAccumulation /= 4;
 				averageAccumulation += averageSolidAccumulation;
-				+cnt;
+				++cnt;
 			}
 		}
 
@@ -527,7 +533,8 @@ void Drawing::compensateCoordinates() {
 		}
 
 		// calculate the average of all elements attached to current Insert Point
-		averageAccumulation /= cnt;
+		if (cnt > 0)
+			averageAccumulation /= cnt;
 		IBKMK::Vector2D newInsertPoint = i.m_insertionPoint + averageAccumulation;
 
 
@@ -594,8 +601,6 @@ void Drawing::compensateCoordinates() {
 
 		for (LinearDimension &ld: m_linearDimensions) {
 			if (ld.m_block == currentBlock) {
-				IBKMK::Vector2D averageLinearDimensionAccumulation = ld.m_dimensionPoint + ld.m_leftPoint
-																	 + ld.m_rightPoint + ld.m_point1 + ld.m_point2 + ld.m_textPoint;
 				ld.m_dimensionPoint += deltaInsertPoint;
 				ld.m_leftPoint += deltaInsertPoint;
 				ld.m_rightPoint += deltaInsertPoint;

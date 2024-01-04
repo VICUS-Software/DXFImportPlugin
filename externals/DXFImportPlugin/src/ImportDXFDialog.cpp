@@ -165,7 +165,8 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 		// calculate center
 		m_drawing.compensateCoordinates();
-		m_drawing.m_origin = m_drawing.weightedCenter();
+		IBKMK::Vector3D center = m_drawing.weightedCenter();
+		m_drawing.m_origin = center;
 		m_drawing.moveToOrigin();
 
 //		m_drawing.compensateCoordinates();
@@ -193,9 +194,9 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 				   .arg(scalingFactor[su] * bounding.m_y)
 				   .arg(scalingFactor[su] * bounding.m_z);
 
-		log += QString("Current center - X: %1 Y: %2 Z: %3\n").arg(scalingFactor[su] * m_drawing.m_origin.m_x)
-				   .arg(scalingFactor[su] * m_drawing.m_origin.m_y)
-				   .arg(scalingFactor[su] * m_drawing.m_origin.m_z);
+		log += QString("Current center - X: %1 Y: %2 Z: %3\n").arg(scalingFactor[su] * center.m_x)
+				   .arg(scalingFactor[su] * center.m_y)
+				   .arg(scalingFactor[su] * center.m_z);
 		log += QString("---------------------------------------------------------\n");
 		log += QString("\nPLEASE MIND: Currently are no hatchings supported.\n");
 
