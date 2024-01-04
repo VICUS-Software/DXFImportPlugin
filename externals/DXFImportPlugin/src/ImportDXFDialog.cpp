@@ -119,7 +119,7 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		m_ui->progressBar->setFormat("Update References %p%");
 
 		// we need to generate inserted geometries here only in order to find the correct drawing center!
-//		m_nextId = 2;
+		m_nextId = 3;
 //		m_drawing.generateInsertGeometries(m_nextId);
 		m_drawing.sortLayersAlphabetical();
 		m_drawing.updateParents();
@@ -168,8 +168,6 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		IBKMK::Vector3D center = m_drawing.weightedCenter();
 		m_drawing.m_origin = center;
 		m_drawing.moveToOrigin();
-
-//		m_drawing.compensateCoordinates();
 
 		// Drawing should be at least bigger than 150 m
 		double AUTO_SCALING_THRESHOLD = 1000;
