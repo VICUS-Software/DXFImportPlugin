@@ -429,7 +429,7 @@ public:
 	*/
 	IBKMK::Vector3D weightedCenter() const;
 
-	/*! Subtracts the origon from all coordinates */
+	/*! Subtracts the origin from all coordinates */
 	void moveToOrigin();
 
 	/*! updates insert Points to reduce offset */
