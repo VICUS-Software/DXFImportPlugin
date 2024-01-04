@@ -120,7 +120,6 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 		// we need to generate inserted geometries here only in order to find the correct drawing center!
 		m_nextId = 3;
-//		m_drawing.generateInsertGeometries(m_nextId);
 		m_drawing.sortLayersAlphabetical();
 		m_drawing.updateParents();
 
@@ -163,8 +162,11 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		m_drawing.updatePointer();
 		IBKMK::Vector3D bounding = boundingBox(&m_drawing, dummy, false);
 
+
+		if (m_ui->checkBoxCompensate->isChecked())
+			m_drawing.compensateCoordinates();
+
 		// calculate center
-		m_drawing.compensateCoordinates();
 		IBKMK::Vector3D center = m_drawing.weightedCenter();
 		m_drawing.m_origin = center;
 		m_drawing.moveToOrigin();

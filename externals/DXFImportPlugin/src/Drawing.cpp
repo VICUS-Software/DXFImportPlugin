@@ -424,8 +424,6 @@ void Drawing::moveToOrigin() {
 
 	for (LinearDimension &ld: m_linearDimensions) {
 		if (ld.m_block == nullptr) {
-			IBKMK::Vector2D averageLinearDimensionAccumulation = ld.m_dimensionPoint + ld.m_leftPoint
-																 + ld.m_rightPoint + ld.m_point1 + ld.m_point2 + ld.m_textPoint;
 			ld.m_dimensionPoint -= origin;
 			ld.m_leftPoint -= origin;
 			ld.m_rightPoint -= origin;
