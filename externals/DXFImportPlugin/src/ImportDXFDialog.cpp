@@ -75,10 +75,7 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 												 - m_ui->lineEditCustomCenterY->value(),
 												 0);
 		// move to origin
-//		m_drawing.moveToOrigin();
-
-		// calculates optimal position of insertion Points
-//		m_drawing.compensateCoordinates();
+		m_drawing.moveToOrigin();
 	}
 
 //	if (m_ui->checkBoxFixFonts->isChecked())
@@ -162,14 +159,13 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		m_drawing.updatePointer();
 		IBKMK::Vector3D bounding = boundingBox(&m_drawing, dummy, false);
 
-
+		// compensate coordinates
 		if (m_ui->checkBoxCompensate->isChecked())
 			m_drawing.compensateCoordinates();
 
 		// calculate center
 		IBKMK::Vector3D center = m_drawing.weightedCenter();
 		m_drawing.m_origin = center;
-		m_drawing.moveToOrigin();
 
 		// Drawing should be at least bigger than 150 m
 		double AUTO_SCALING_THRESHOLD = 1000;
