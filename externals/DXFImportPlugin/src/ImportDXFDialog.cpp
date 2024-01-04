@@ -75,10 +75,10 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 												 - m_ui->lineEditCustomCenterY->value(),
 												 0);
 		// move to origin
-		m_drawing.moveToOrigin();
+//		m_drawing.moveToOrigin();
 
 		// calculates optimal position of insertion Points
-		m_drawing.compensateCoordinates();
+//		m_drawing.compensateCoordinates();
 	}
 
 //	if (m_ui->checkBoxFixFonts->isChecked())
@@ -164,7 +164,9 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		IBKMK::Vector3D bounding = boundingBox(&m_drawing, dummy, false);
 
 		// calculate center
+		m_drawing.compensateCoordinates();
 		m_drawing.m_origin = m_drawing.weightedCenter();
+		m_drawing.moveToOrigin();
 
 //		m_drawing.compensateCoordinates();
 

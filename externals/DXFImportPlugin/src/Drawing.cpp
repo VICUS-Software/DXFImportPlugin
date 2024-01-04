@@ -477,7 +477,7 @@ void Drawing::compensateCoordinates() {
 
 		for (PolyLine &pl: m_polylines) {
 			if (pl.m_block == currentBlock) {
-				unsigned int polyLineCounter;
+				unsigned int polyLineCounter = 0;
 				IBKMK::Vector2D polyLineAccumulation(0,0);
 				for (IBKMK::Vector2D &v: pl.m_polyline) {
 					polyLineAccumulation += v;
