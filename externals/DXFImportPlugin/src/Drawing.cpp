@@ -454,7 +454,6 @@ void Drawing::compensateCoordinates() {
 		// iterate over all elements, accumulate the coordinates
 		for (Point &p: m_points) {
 			if (p.m_block == currentBlock) {
-				averageAccumulation += p.m_block->m_basePoint;
 				averageAccumulation += p.m_point;
 				++cnt;
 			}
