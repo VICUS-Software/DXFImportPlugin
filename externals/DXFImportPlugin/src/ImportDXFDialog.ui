@@ -66,21 +66,17 @@
       <string>Settings</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="1" column="1">
-       <widget class="QLabel" name="labelX">
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="checkBoxMove">
         <property name="text">
-         <string>x</string>
+         <string>Move drawing to origin</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="labelY">
-        <property name="text">
-         <string>y</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
+      <item row="0" column="1">
        <widget class="QCheckBox" name="checkBoxImportText">
         <property name="enabled">
          <bool>true</bool>
@@ -93,7 +89,7 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="4">
+      <item row="0" column="2">
        <spacer name="horizontalSpacer_2">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -106,28 +102,36 @@
         </property>
        </spacer>
       </item>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="checkBoxCustomOrigin">
-        <property name="text">
-         <string>Specify custom origin:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="checkBoxMove">
-        <property name="text">
-         <string>Move drawing to origin</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2" colspan="3">
-       <widget class="QtExt::ValidatingLineEdit" name="lineEditCustomCenterY"/>
-      </item>
-      <item row="2" column="2" colspan="3">
-       <widget class="QtExt::ValidatingLineEdit" name="lineEditCustomCenterX"/>
+      <item row="1" column="0" colspan="3">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="checkBoxCustomOrigin">
+          <property name="text">
+           <string>Specify custom origin:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLabel" name="labelX">
+          <property name="text">
+           <string>x</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QtExt::ValidatingLineEdit" name="lineEditCustomCenterY"/>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLabel" name="labelY">
+          <property name="text">
+           <string>y</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QtExt::ValidatingLineEdit" name="lineEditCustomCenterX"/>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
