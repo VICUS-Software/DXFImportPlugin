@@ -161,7 +161,7 @@ void Drawing::generateInsertGeometries(unsigned int &nextId) {
 		if (insert.m_currentBlock == nullptr)
 			throw IBK::Exception(IBK::FormatString("Block with name '%1' was not found").arg(insert.m_currentBlockName.toStdString()), FUNC_ID);
 
-		IBKMK::Vector2D trans;
+		IBKMK::Vector2D trans(0,0);
 		transformInsert(trans, insert, nextId);
 	}
 
@@ -682,7 +682,7 @@ void generateObjectFromInsert(unsigned int &nextId, const Drawing::Block &block,
 		t newObj(obj);
 		newObj.m_id = ++nextId;
 		newObj.m_blockName = "";
-		newObj.m_simpleTranslation = trans;
+		newObj.m_simpleTranslation = IBKMK::Vector2D(trans.m_x, trans.m_y);
 		newObj.m_block = nullptr;
 		newObj.m_isInsertObject = true;
 

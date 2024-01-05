@@ -104,11 +104,16 @@ public:
 		/*! Copy constructor */
 		AbstractDrawingObject(const AbstractDrawingObject &other):
 			m_layerName(other.m_layerName),
+			m_parentLayer(other.m_parentLayer),
 			m_color(other.m_color),
 			m_lineWeight(other.m_lineWeight),
 			m_zPosition(other.m_zPosition),
 			m_blockName(other.m_blockName),
-			m_id(other.m_id)
+			m_block(other.m_block),
+			m_id(other.m_id),
+			m_trans(other.m_trans),
+			m_isInsertObject(other.m_isInsertObject),
+			m_simpleTranslation(other.m_simpleTranslation)
 			{}
 
 		/*! D'tor. */
