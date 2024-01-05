@@ -427,7 +427,7 @@ public:
 	/*! Calculates the center coordinates, defined as mean value of all coordinates
 		Pointers must be updated before calling this function!
 	*/
-	IBKMK::Vector3D weightedCenter() const;
+	IBKMK::Vector3D weightedCenter(unsigned int nextId) ;
 
 	/*! Subtracts the origin from all coordinates */
 	void moveToOrigin();
@@ -489,7 +489,7 @@ private:
 	Block* findBlockPointer(const QString &name, const std::map<QString, Block*> &blockRefs);
 
 	/*! Transforms all inserts. */
-	void transformInsert(QMatrix4x4 &trans, const Drawing::Insert &insert, unsigned int &nextId);
+	void transformInsert(QMatrix4x4 trans, const Drawing::Insert &insert, unsigned int &nextId);
 
 	/*! Cached unique-ID -> object ptr map. Greatly speeds up objectByID() and any other lookup functions.
 		This map is updated in updatePointers().

@@ -246,93 +246,106 @@ const IBKMK::Vector3D Drawing::localY() const {
 }
 
 
-IBKMK::Vector3D Drawing::weightedCenter() const {
+IBKMK::Vector3D Drawing::weightedCenter(unsigned int nextId) {
+
+	std::set<Block *> listAllBlocksWithNoInsertPoint;
+	listAllBlocksWithNoInsertPoint.insert(nullptr);
+	for(Block &b : m_blocks){
+		bool hasInsertBlock = false;
+		for(Insert &i : m_inserts){
+			if(i.m_currentBlock == &b){
+				hasInsertBlock = true;
+			}
+		}
+		if(!hasInsertBlock){
+			listAllBlocksWithNoInsertPoint.insert(&b);
+		}
+	}
+
+	generateInsertGeometries(nextId);
 
 	IBKMK::Vector2D averageAccumulation(0,0);
 	unsigned int cnt = 0;
 
 	// iterate over all elements, accumulate the coordinates
 	for (const Point &p : m_points) {
-		if(p.m_block == nullptr) {
-			averageAccumulation += p.m_point;
-			++cnt;
+		if(listAllBlocksWithNoInsertPoint.find(p.m_block) != listAllBlocksWithNoInsertPoint.end()){
+		averageAccumulation += p.m_point;
+		qDebug() << "Point: x" << p.m_point.m_x << " y " << p.m_point.m_y;
+		++cnt;
 		}
 	}
 
 	for (const Line &l: m_lines) {
-		if(l.m_block == nullptr) {
-			IBKMK::Vector2D averageLineAccumulation = l.m_point1 + l.m_point2;
-			averageLineAccumulation /= 2;
-			averageAccumulation += averageLineAccumulation;
-			++cnt;
+		if(listAllBlocksWithNoInsertPoint.find(l.m_block) != listAllBlocksWithNoInsertPoint.end()){
+		if(l.m_point1.m_x < 500000) {
+			qDebug() << "Line: x" << l.m_point1.m_x << " y " << l.m_point1.m_y;
+		}
+		IBKMK::Vector2D averageLineAccumulation = l.m_point1 + l.m_point2;
+		averageLineAccumulation /= 2;
+		averageAccumulation += averageLineAccumulation;
+		++cnt;
 		}
 	}
 
 	for (const PolyLine &pl: m_polylines) {
-		if(pl.m_block == nullptr) {
-			unsigned int polyLineCounter = 0;
-			IBKMK::Vector2D polyLineAccumulation(0,0);
-			for (const IBKMK::Vector2D &v: pl.m_polyline) {
-				polyLineAccumulation += v;
-				++polyLineCounter;
-			}
-			polyLineAccumulation /= polyLineCounter;
-			averageAccumulation += polyLineAccumulation;
-			++cnt;
+		if(listAllBlocksWithNoInsertPoint.find(pl.m_block) != listAllBlocksWithNoInsertPoint.end()){
+		unsigned int polyLineCounter = 0;
+		IBKMK::Vector2D polyLineAccumulation(0,0);
+		for (const IBKMK::Vector2D &v: pl.m_polyline) {
+			polyLineAccumulation += v;
+			++polyLineCounter;
+		}
+		polyLineAccumulation /= polyLineCounter;
+		averageAccumulation += polyLineAccumulation;
+		++cnt;
 		}
 	}
 
 	for (const Circle &c: m_circles) {
-		if(c.m_block == nullptr) {
-			averageAccumulation += c.m_center;
-			++cnt;
+		if(listAllBlocksWithNoInsertPoint.find(c.m_block) != listAllBlocksWithNoInsertPoint.end()){
+		averageAccumulation += c.m_center;
+		++cnt;
 		}
 	}
 
 	for (const Ellipse &e: m_ellipses) {
-		if(e.m_block == nullptr) {
-			averageAccumulation += e.m_center;
-			++cnt;
+		if(listAllBlocksWithNoInsertPoint.find(e.m_block) != listAllBlocksWithNoInsertPoint.end()){
+		averageAccumulation += e.m_center;
+		++cnt;
 		}
 	}
 
 	for (const Arc &a: m_arcs) {
-		if(a.m_block == nullptr) {
-			averageAccumulation += a.m_center;
-			++cnt;
+		if(listAllBlocksWithNoInsertPoint.find(a.m_block) != listAllBlocksWithNoInsertPoint.end()){
+		averageAccumulation += a.m_center;
+		++cnt;
 		}
 	}
 
 	for (const Solid &s: m_solids) {
-		if(s.m_block == nullptr) {
-			IBKMK::Vector2D averageSolidAccumulation = s.m_point1 + s.m_point2 + s.m_point3 + s.m_point4;
-			averageSolidAccumulation /= 4;
-			averageAccumulation += averageSolidAccumulation;
-			++cnt;
+		if(listAllBlocksWithNoInsertPoint.find(s.m_block) != listAllBlocksWithNoInsertPoint.end()){
+		IBKMK::Vector2D averageSolidAccumulation = s.m_point1 + s.m_point2 + s.m_point3 + s.m_point4;
+		averageSolidAccumulation /= 4;
+		averageAccumulation += averageSolidAccumulation;
+		++cnt;
 		}
 	}
 
 	for (const Text &t: m_texts) {
-		if(t.m_block == nullptr) {
-			averageAccumulation += t.m_basePoint;
-			++cnt;
+		if(listAllBlocksWithNoInsertPoint.find(t.m_block) != listAllBlocksWithNoInsertPoint.end()){
+		averageAccumulation += t.m_basePoint;
+		++cnt;
 		}
 	}
 
 	for (const LinearDimension &ld: m_linearDimensions) {
-		if(ld.m_block == nullptr) {
-			IBKMK::Vector2D averageLinearDimensionAccumulation = ld.m_dimensionPoint + ld.m_leftPoint
-																 + ld.m_rightPoint + ld.m_point1 + ld.m_point2 + ld.m_textPoint;
-			averageLinearDimensionAccumulation /= 6;
-			averageAccumulation += averageLinearDimensionAccumulation;
-			++cnt;
-		}
-	}
-
-	for(const Insert &i : m_inserts) {
-		if(i.m_parentBlock == nullptr) {
-			averageAccumulation += i.m_insertionPoint;
-			++cnt;
+		if(listAllBlocksWithNoInsertPoint.find(ld.m_block) != listAllBlocksWithNoInsertPoint.end()){
+		IBKMK::Vector2D averageLinearDimensionAccumulation = ld.m_dimensionPoint + ld.m_leftPoint
+															 + ld.m_rightPoint + ld.m_point1 + ld.m_point2 + ld.m_textPoint;
+		averageLinearDimensionAccumulation /= 6;
+		averageAccumulation += averageLinearDimensionAccumulation;
+		++cnt;
 		}
 	}
 
@@ -368,21 +381,38 @@ void Drawing::moveToOrigin() {
 
 	IBKMK::Vector2D origin(m_origin.m_x, m_origin.m_y);
 
+	std::vector<Block *> listAllBlocksWithNoInsertPoint;
+	listAllBlocksWithNoInsertPoint.push_back(nullptr);
+	for(Block &b : m_blocks){
+		bool hasInsertBlock = false;
+		for(Insert &i : m_inserts){
+			if(i.m_currentBlock == &b){
+				hasInsertBlock = true;
+			}
+		}
+		if(!hasInsertBlock){
+			listAllBlocksWithNoInsertPoint.push_back(&b);
+		}
+	}
+
 	for (Point &p: m_points) {
-		if (p.m_block == nullptr) {
+		if (std::find(listAllBlocksWithNoInsertPoint.begin(),
+					  listAllBlocksWithNoInsertPoint.end(), p.m_block) != listAllBlocksWithNoInsertPoint.end()) {
 			p.m_point -= origin;
 		}
 	}
 
 	for (Line &l: m_lines) {
-		if (l.m_block == nullptr) {
+		if (std::find(listAllBlocksWithNoInsertPoint.begin(),
+					  listAllBlocksWithNoInsertPoint.end(), l.m_block) != listAllBlocksWithNoInsertPoint.end()) {
 			l.m_point1 -= origin;
 			l.m_point2 -= origin;
 		}
 	}
 
 	for (PolyLine &pl: m_polylines) {
-		if (pl.m_block == nullptr) {
+		if (std::find(listAllBlocksWithNoInsertPoint.begin(),
+					  listAllBlocksWithNoInsertPoint.end(), pl.m_block) != listAllBlocksWithNoInsertPoint.end()) {
 			for (IBKMK::Vector2D &v: pl.m_polyline) {
 				v -= origin;
 			}
@@ -390,25 +420,29 @@ void Drawing::moveToOrigin() {
 	}
 
 	for (Circle &c: m_circles) {
-		if (c.m_block == nullptr) {
+		if (std::find(listAllBlocksWithNoInsertPoint.begin(),
+					  listAllBlocksWithNoInsertPoint.end(), c.m_block) != listAllBlocksWithNoInsertPoint.end()) {
 			c.m_center -= origin;
 		}
 	}
 
 	for (Ellipse &e: m_ellipses) {
-		if (e.m_block == nullptr) {
+		if (std::find(listAllBlocksWithNoInsertPoint.begin(),
+					  listAllBlocksWithNoInsertPoint.end(), e.m_block) != listAllBlocksWithNoInsertPoint.end()) {
 			e.m_center -= origin;
 		}
 	}
 
 	for (Arc &a: m_arcs) {
-		if (a.m_block == nullptr) {
+		if (std::find(listAllBlocksWithNoInsertPoint.begin(),
+					  listAllBlocksWithNoInsertPoint.end(), a.m_block) != listAllBlocksWithNoInsertPoint.end()) {
 			a.m_center -= origin;
 		}
 	}
 
 	for (Solid &s: m_solids) {
-		if (s.m_block == nullptr) {
+		if (std::find(listAllBlocksWithNoInsertPoint.begin(),
+					  listAllBlocksWithNoInsertPoint.end(), s.m_block) != listAllBlocksWithNoInsertPoint.end()) {
 			s.m_point1 -= origin;
 			s.m_point2 -= origin;
 			s.m_point3 -= origin;
@@ -417,13 +451,15 @@ void Drawing::moveToOrigin() {
 	}
 
 	for (Text &t: m_texts) {
-		if (t.m_block == nullptr) {
+		if (std::find(listAllBlocksWithNoInsertPoint.begin(),
+					  listAllBlocksWithNoInsertPoint.end(), t.m_block) != listAllBlocksWithNoInsertPoint.end()) {
 			t.m_basePoint -= origin;
 		}
 	}
 
 	for (LinearDimension &ld: m_linearDimensions) {
-		if (ld.m_block == nullptr) {
+		if (std::find(listAllBlocksWithNoInsertPoint.begin(),
+					  listAllBlocksWithNoInsertPoint.end(), ld.m_block) != listAllBlocksWithNoInsertPoint.end()) {
 			ld.m_dimensionPoint -= origin;
 			ld.m_leftPoint -= origin;
 			ld.m_rightPoint -= origin;
@@ -434,7 +470,8 @@ void Drawing::moveToOrigin() {
 	}
 
 	for (Insert &ic: m_inserts){
-		if(ic.m_parentBlock == nullptr) {
+		if(std::find(listAllBlocksWithNoInsertPoint.begin(),
+					  listAllBlocksWithNoInsertPoint.end(), ic.m_parentBlock) != listAllBlocksWithNoInsertPoint.end()) {
 			ic.m_insertionPoint -= origin;
 		}
 	}
@@ -656,7 +693,7 @@ void generateObjectFromInsert(unsigned int &nextId, const Drawing::Block &block,
 }
 
 
-void Drawing::transformInsert(QMatrix4x4 & trans, const Insert & insert, unsigned int & nextId) {
+void Drawing::transformInsert(QMatrix4x4 trans, const Insert & insert, unsigned int & nextId) {
 
 	Q_ASSERT(insert.m_currentBlock != nullptr);
 	IBKMK::Vector2D insertPoint = insert.m_insertionPoint - insert.m_currentBlock->m_basePoint;

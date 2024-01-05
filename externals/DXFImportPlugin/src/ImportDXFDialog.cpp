@@ -109,6 +109,7 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		// we clear the drawing
 		m_drawing = Drawing();
 		m_drawing.m_id = 1;
+		m_nextId = 3;
 
 		success = readDxfFile(m_drawing, fileName.fileName());
 
@@ -116,7 +117,7 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		m_ui->progressBar->setFormat("Update References %p%");
 
 		// we need to generate inserted geometries here only in order to find the correct drawing center!
-		m_nextId = 3;
+
 		m_drawing.sortLayersAlphabetical();
 		m_drawing.updateParents();
 
@@ -164,7 +165,7 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 			m_drawing.compensateCoordinates();
 
 		// calculate center
-		IBKMK::Vector3D center = m_drawing.weightedCenter();
+		IBKMK::Vector3D center = m_drawing.weightedCenter(m_nextId);
 		m_drawing.m_origin = center;
 
 		// Drawing should be at least bigger than 150 m
