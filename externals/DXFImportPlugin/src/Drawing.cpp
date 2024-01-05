@@ -331,13 +331,13 @@ IBKMK::Vector3D Drawing::weightedCenter() const {
 
 	for(const Insert &i : m_inserts) {
 		if(i.m_parentBlock == nullptr) {
-			averageAccumulation += i.m_currentBlock->m_basePoint;
 			averageAccumulation += i.m_insertionPoint;
 			++cnt;
 		}
 	}
 
-	averageAccumulation /= cnt;
+	if (cnt > 0)
+		averageAccumulation /= cnt;
 
 	return IBKMK::Vector3D(averageAccumulation.m_x, averageAccumulation.m_y, 0);
 }
