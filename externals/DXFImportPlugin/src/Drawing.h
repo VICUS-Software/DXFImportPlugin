@@ -161,6 +161,8 @@ public:
 		*/
 		bool										m_isInsertObject = false;
 
+		IBKMK::Vector2D								m_simpleTranslation = IBKMK::Vector2D(0,0);
+
 	protected:
 		/*! Flag to indictate recalculation of points. */
 		mutable bool								m_dirtyPoints = true;
@@ -489,7 +491,7 @@ private:
 	Block* findBlockPointer(const QString &name, const std::map<QString, Block*> &blockRefs);
 
 	/*! Transforms all inserts. */
-	void transformInsert(QMatrix4x4 trans, const Drawing::Insert &insert, unsigned int &nextId);
+	void transformInsert(IBKMK::Vector2D trans, const Drawing::Insert &insert, unsigned int &nextId);
 
 	/*! Cached unique-ID -> object ptr map. Greatly speeds up objectByID() and any other lookup functions.
 		This map is updated in updatePointers().

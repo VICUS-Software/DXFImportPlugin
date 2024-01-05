@@ -161,7 +161,7 @@ void Drawing::generateInsertGeometries(unsigned int &nextId) {
 		if (insert.m_currentBlock == nullptr)
 			throw IBK::Exception(IBK::FormatString("Block with name '%1' was not found").arg(insert.m_currentBlockName.toStdString()), FUNC_ID);
 
-		QMatrix4x4 trans;
+		IBKMK::Vector2D trans;
 		transformInsert(trans, insert, nextId);
 	}
 
@@ -270,18 +270,19 @@ IBKMK::Vector3D Drawing::weightedCenter(unsigned int nextId) {
 	// iterate over all elements, accumulate the coordinates
 	for (const Point &p : m_points) {
 		if(listAllBlocksWithNoInsertPoint.find(p.m_block) != listAllBlocksWithNoInsertPoint.end()){
-		averageAccumulation += p.m_point;
+		averageAccumulation += p.m_point + p.m_simpleTranslation;
 		qDebug() << "Point: x" << p.m_point.m_x << " y " << p.m_point.m_y;
 		++cnt;
 		}
 	}
 
 	for (const Line &l: m_lines) {
-		if(listAllBlocksWithNoInsertPoint.find(l.m_block) != listAllBlocksWithNoInsertPoint.end()){
-		if(l.m_point1.m_x < 500000) {
+		if (listAllBlocksWithNoInsertPoint.find(l.m_block) != listAllBlocksWithNoInsertPoint.end()){
+		IBKMK::Vector2D v = l.m_point1 + l.m_simpleTranslation;
+		if (v.m_x  < 500000) {
 			qDebug() << "Line: x" << l.m_point1.m_x << " y " << l.m_point1.m_y;
 		}
-		IBKMK::Vector2D averageLineAccumulation = l.m_point1 + l.m_point2;
+		IBKMK::Vector2D averageLineAccumulation = l.m_point1 + l.m_simpleTranslation + l.m_point2 + l.m_simpleTranslation;
 		averageLineAccumulation /= 2;
 		averageAccumulation += averageLineAccumulation;
 		++cnt;
@@ -293,7 +294,7 @@ IBKMK::Vector3D Drawing::weightedCenter(unsigned int nextId) {
 		unsigned int polyLineCounter = 0;
 		IBKMK::Vector2D polyLineAccumulation(0,0);
 		for (const IBKMK::Vector2D &v: pl.m_polyline) {
-			polyLineAccumulation += v;
+			polyLineAccumulation += v +pl.m_simpleTranslation;
 			++polyLineCounter;
 		}
 		polyLineAccumulation /= polyLineCounter;
@@ -304,28 +305,28 @@ IBKMK::Vector3D Drawing::weightedCenter(unsigned int nextId) {
 
 	for (const Circle &c: m_circles) {
 		if(listAllBlocksWithNoInsertPoint.find(c.m_block) != listAllBlocksWithNoInsertPoint.end()){
-		averageAccumulation += c.m_center;
+		averageAccumulation += c.m_center + c.m_simpleTranslation;
 		++cnt;
 		}
 	}
 
 	for (const Ellipse &e: m_ellipses) {
 		if(listAllBlocksWithNoInsertPoint.find(e.m_block) != listAllBlocksWithNoInsertPoint.end()){
-		averageAccumulation += e.m_center;
+		averageAccumulation += e.m_center + e.m_simpleTranslation;
 		++cnt;
 		}
 	}
 
 	for (const Arc &a: m_arcs) {
 		if(listAllBlocksWithNoInsertPoint.find(a.m_block) != listAllBlocksWithNoInsertPoint.end()){
-		averageAccumulation += a.m_center;
+		averageAccumulation += a.m_center + a.m_simpleTranslation;
 		++cnt;
 		}
 	}
 
 	for (const Solid &s: m_solids) {
 		if(listAllBlocksWithNoInsertPoint.find(s.m_block) != listAllBlocksWithNoInsertPoint.end()){
-		IBKMK::Vector2D averageSolidAccumulation = s.m_point1 + s.m_point2 + s.m_point3 + s.m_point4;
+		IBKMK::Vector2D averageSolidAccumulation = s.m_point1 + s.m_point2 + s.m_point3 + s.m_point4 + 4*s.m_simpleTranslation;
 		averageSolidAccumulation /= 4;
 		averageAccumulation += averageSolidAccumulation;
 		++cnt;
@@ -334,16 +335,15 @@ IBKMK::Vector3D Drawing::weightedCenter(unsigned int nextId) {
 
 	for (const Text &t: m_texts) {
 		if(listAllBlocksWithNoInsertPoint.find(t.m_block) != listAllBlocksWithNoInsertPoint.end()){
-		averageAccumulation += t.m_basePoint;
+		averageAccumulation += t.m_basePoint + t.m_simpleTranslation;
 		++cnt;
 		}
 	}
 
 	for (const LinearDimension &ld: m_linearDimensions) {
 		if(listAllBlocksWithNoInsertPoint.find(ld.m_block) != listAllBlocksWithNoInsertPoint.end()){
-		IBKMK::Vector2D averageLinearDimensionAccumulation = ld.m_dimensionPoint + ld.m_leftPoint
-															 + ld.m_rightPoint + ld.m_point1 + ld.m_point2 + ld.m_textPoint;
-		averageLinearDimensionAccumulation /= 6;
+		IBKMK::Vector2D averageLinearDimensionAccumulation = ld.m_point1 + ld.m_point2 + 2*ld.m_simpleTranslation;
+		averageLinearDimensionAccumulation /= 2;
 		averageAccumulation += averageLinearDimensionAccumulation;
 		++cnt;
 		}
@@ -668,7 +668,7 @@ Drawing::Block *Drawing::findBlockPointer(const QString &name, const std::map<QS
 
 template <typename t>
 void generateObjectFromInsert(unsigned int &nextId, const Drawing::Block &block,
-							  std::vector<t> &objects, const QMatrix4x4 &trans) {
+							  std::vector<t> &objects, IBKMK::Vector2D trans) {
 	std::vector<t> newObjects;
 
 	for (const t &obj : objects) {
@@ -681,8 +681,8 @@ void generateObjectFromInsert(unsigned int &nextId, const Drawing::Block &block,
 
 		t newObj(obj);
 		newObj.m_id = ++nextId;
-		newObj.m_trans = trans;
 		newObj.m_blockName = "";
+		newObj.m_simpleTranslation = trans;
 		newObj.m_block = nullptr;
 		newObj.m_isInsertObject = true;
 
@@ -693,14 +693,13 @@ void generateObjectFromInsert(unsigned int &nextId, const Drawing::Block &block,
 }
 
 
-void Drawing::transformInsert(QMatrix4x4 trans, const Insert & insert, unsigned int & nextId) {
+void Drawing::transformInsert(IBKMK::Vector2D trans, const Insert & insert, unsigned int & nextId) {
 
 	Q_ASSERT(insert.m_currentBlock != nullptr);
 	IBKMK::Vector2D insertPoint = insert.m_insertionPoint - insert.m_currentBlock->m_basePoint;
 
-	trans.translate(QVector3D(insertPoint.m_x,
-							  insertPoint.m_y,
-							  0.0));
+	trans.m_x += insertPoint.m_x;
+	trans.m_y += insertPoint.m_y;
 
 	for (const Insert &i : m_inserts) {
 		if (i.m_parentBlock == nullptr)
