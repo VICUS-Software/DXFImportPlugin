@@ -355,8 +355,8 @@ IBKMK::Vector3D Drawing::weightedCenter(unsigned int nextId) {
 	return IBKMK::Vector3D(averageAccumulation.m_x, averageAccumulation.m_y, 0);
 }
 
-IBKMK::Vector3D Drawing::weightedCenterMedian(unsigned int nextId)
-{
+
+IBKMK::Vector3D Drawing::weightedCenterMedian(unsigned int nextId) {
 
 	std::set<Block *> listAllBlocksWithNoInsertPoint;
 	listAllBlocksWithNoInsertPoint.insert(nullptr);
@@ -377,8 +377,8 @@ IBKMK::Vector3D Drawing::weightedCenterMedian(unsigned int nextId)
 	unsigned int cnt = 0;
 	unsigned int moduloThreshold = 10;
 
-	std::vector<unsigned int> xValues;
-	std::vector<unsigned int> yValues;
+	std::vector<double> xValues;
+	std::vector<double> yValues;
 
 
 	// iterate over all elements, accumulate the coordinates
@@ -477,8 +477,8 @@ IBKMK::Vector3D Drawing::weightedCenterMedian(unsigned int nextId)
 	std::nth_element(xValues.begin(), xValues.begin() + xValues.size() / 2, xValues.end());
 	std::nth_element(yValues.begin(), yValues.begin() + yValues.size() / 2, yValues.end());
 
-	unsigned int x = xValues[xValues.size() / 2 - 1];
-	unsigned int y = yValues[yValues.size() / 2 - 1];
+	double x = xValues[xValues.size() / 2 - 1];
+	double y = yValues[yValues.size() / 2 - 1];
 	return IBKMK::Vector3D(x, y, 0);
 }
 
