@@ -71,8 +71,8 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 	if (m_ui->checkBoxMove->isChecked()) {
 		// set custom origin ?
 		if (m_ui->checkBoxCustomOrigin->isChecked())
-			m_drawing.m_origin = IBKMK::Vector3D(- m_ui->lineEditCustomCenterX->value(),
-												 - m_ui->lineEditCustomCenterY->value(),
+			m_drawing.m_origin = IBKMK::Vector3D(m_ui->lineEditCustomCenterX->value(),
+												 m_ui->lineEditCustomCenterY->value(),
 												 0);
 		// move to origin
 		m_drawing.moveToOrigin();
