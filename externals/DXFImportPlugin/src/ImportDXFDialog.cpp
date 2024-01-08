@@ -23,15 +23,17 @@ ImportDXFDialog::ImportDXFDialog(QWidget *parent) :
 
 	resize(800, 600);
 
+	setWindowTitle(tr("Import DXF Drawing"));
+
 	QString defaultName = tr("Drawing");
 
 	m_ui->lineEditDrawingName->setText(defaultName);
 
-	m_ui->comboBoxUnit->addItem("Auto", SU_Auto);
-	m_ui->comboBoxUnit->addItem("Meter", SU_Meter);
-	m_ui->comboBoxUnit->addItem("Decimeter", SU_Decimeter);
-	m_ui->comboBoxUnit->addItem("Centimeter", SU_Centimeter);
-	m_ui->comboBoxUnit->addItem("Millimeter", SU_Millimeter);
+	m_ui->comboBoxUnit->addItem(tr("Auto"), SU_Auto);
+	m_ui->comboBoxUnit->addItem(tr("Meter"), SU_Meter);
+	m_ui->comboBoxUnit->addItem(tr("Decimeter"), SU_Decimeter);
+	m_ui->comboBoxUnit->addItem(tr("Centimeter"), SU_Centimeter);
+	m_ui->comboBoxUnit->addItem(tr("Millimeter"), SU_Millimeter);
 
 //	m_ui->checkBoxFixFonts->setHidden(true);
 
@@ -161,8 +163,7 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		IBKMK::Vector3D bounding = boundingBox(&m_drawing, dummy, false);
 
 		// compensate coordinates
-		if (m_ui->checkBoxCompensate->isChecked())
-			m_drawing.compensateCoordinates();
+		m_drawing.compensateCoordinates();
 
 		// calculate center
 		IBKMK::Vector3D center = m_drawing.weightedCenterMedian(m_nextId);
@@ -184,8 +185,13 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 				foundAutoScaling = true;
 				break;
 			}
+
+			// for very large coordinates we assume meter again
+			if (bounding.m_x > 1e6 && bounding.m_y > 1e6)
+				scalingFactor[SU_Auto] = scalingFactor[SU_Meter];
+
 			if (foundAutoScaling)
-				log += QString("Found auto scaling factor: %1\n").arg(scalingFactor[SU_Auto]);
+				log += QString("Found auto scaling unit: %1 m\n").arg(scalingFactor[SU_Auto]);
 		}
 		log += QString("Current dimensions - X: %1 Y: %2 Z: %3\n").arg(scalingFactor[su] * bounding.m_x)
 				   .arg(scalingFactor[su] * bounding.m_y)
@@ -650,7 +656,7 @@ void DRW_InterfaceImpl::addLWPolyline(const DRW_LWPolyline& data){
 	newPolyline.m_layerName = QString::fromStdString(data.layer);
 
 	/* value 256 means use defaultColor, value 7 is black */
-	if(!(data.color == 256 || data.color == 7))
+	if (!(data.color == 256 || data.color == 7))
 		newPolyline.m_color = QColor(DRW::dxfColors[data.color][0], DRW::dxfColors[data.color][1], DRW::dxfColors[data.color][2]);
 	else
 		newPolyline.m_color = QColor();
@@ -670,7 +676,8 @@ void DRW_InterfaceImpl::addPolyline(const DRW_Polyline& data){
 	newPolyline.m_polyline = std::vector<IBKMK::Vector2D>();
 
 	// iterateover data.vertlist, insert all vertices of Polyline into vector
-	for(size_t i = 0; i < data.vertlist.size(); i++){
+	for (int i = 0; i <= data.vertexcount; i++){
+//	for (int i = 0; i < data.vertlist.size(); i++){
 		IBKMK::Vector2D point(data.vertlist[i]->basePoint.x, data.vertlist[i]->basePoint.y);
 		if(m_activeBlock != nullptr) {
 			point -= m_activeBlock->m_basePoint;

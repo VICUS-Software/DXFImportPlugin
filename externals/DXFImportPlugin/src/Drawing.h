@@ -166,6 +166,7 @@ public:
 		*/
 		bool										m_isInsertObject = false;
 
+		/*! the translation due to the insertion point, considerts also recursive insertions. */
 		IBKMK::Vector2D								m_simpleTranslation = IBKMK::Vector2D(0,0);
 
 	protected:
@@ -436,12 +437,18 @@ public:
 	*/
 	IBKMK::Vector3D weightedCenter(unsigned int nextId);
 
+	/*! Calculates the center coordinates, defined as median value of all coordinates.
+	 *  Median is beneficial here as it is less affected by a little number of extrem outliers.
+		Pointers must be updated before calling this function!
+	*/
 	IBKMK::Vector3D weightedCenterMedian(unsigned int nextId);
 
 	/*! Subtracts the origin from all coordinates */
 	void moveToOrigin();
 
-	/*! updates insert Points to reduce offset */
+	/*! Compensates element coordinates with insertion point coordinates to reduce high numbers
+		e.g. coordinate is at x=3.5e7 and insertion point at x=-3.5e7, both can be set to 0.
+	  */
 	void compensateCoordinates();
 
 	/*! point of origin */

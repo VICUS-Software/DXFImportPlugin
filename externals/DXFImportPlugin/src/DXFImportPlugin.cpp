@@ -122,9 +122,9 @@ bool DXFImportPlugin::import(QWidget * parent, QString& projectText) {
 
 		projectText = QString::fromStdString(str);
 
-		std::ofstream outFile("C:/Test/imported_drawing.xml");
-		outFile << str;
-		outFile.close();
+//		std::ofstream outFile("C:/Test/imported_drawing.xml");
+//		outFile << str;
+//		outFile.close();
 
 		return true;
 	}
@@ -138,7 +138,7 @@ QString DXFImportPlugin::title() const {
 }
 
 QString DXFImportPlugin::importMenuCaption() const {
-	return tr("Import DXF/DWG file ...");
+	return tr("Import DXF file ...");
 }
 
 void DXFImportPlugin::setLanguage(QString langId, QString appname) {
