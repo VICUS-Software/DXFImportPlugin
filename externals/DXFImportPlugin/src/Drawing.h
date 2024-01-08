@@ -434,7 +434,9 @@ public:
 	/*! Calculates the center coordinates, defined as mean value of all coordinates
 		Pointers must be updated before calling this function!
 	*/
-	IBKMK::Vector3D weightedCenter(unsigned int nextId) ;
+	IBKMK::Vector3D weightedCenter(unsigned int nextId);
+
+	IBKMK::Vector3D weightedCenterMedian(unsigned int nextId);
 
 	/*! Subtracts the origin from all coordinates */
 	void moveToOrigin();

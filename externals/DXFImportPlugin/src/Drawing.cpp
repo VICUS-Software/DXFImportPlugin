@@ -355,6 +355,133 @@ IBKMK::Vector3D Drawing::weightedCenter(unsigned int nextId) {
 	return IBKMK::Vector3D(averageAccumulation.m_x, averageAccumulation.m_y, 0);
 }
 
+IBKMK::Vector3D Drawing::weightedCenterMedian(unsigned int nextId)
+{
+
+	std::set<Block *> listAllBlocksWithNoInsertPoint;
+	listAllBlocksWithNoInsertPoint.insert(nullptr);
+	for(Block &b : m_blocks){
+		bool hasInsertBlock = false;
+		for(Insert &i : m_inserts){
+			if(i.m_currentBlock == &b){
+				hasInsertBlock = true;
+			}
+		}
+		if(!hasInsertBlock){
+		listAllBlocksWithNoInsertPoint.insert(&b);
+		}
+	}
+
+	generateInsertGeometries(nextId);
+
+	unsigned int cnt = 0;
+	unsigned int moduloThreshold = 10;
+
+	std::vector<unsigned int> xValues;
+	std::vector<unsigned int> yValues;
+
+
+	// iterate over all elements, accumulate the coordinates
+	for (const Point &p : m_points) {
+		if(listAllBlocksWithNoInsertPoint.find(p.m_block) != listAllBlocksWithNoInsertPoint.end()){
+			if(cnt % moduloThreshold == 0){
+				xValues.push_back(p.m_point.m_x + p.m_simpleTranslation.m_x);
+				yValues.push_back(p.m_point.m_y + p.m_simpleTranslation.m_y);
+			}
+			++cnt;
+		}
+	}
+
+	for (const Line &l: m_lines) {
+		if (listAllBlocksWithNoInsertPoint.find(l.m_block) != listAllBlocksWithNoInsertPoint.end()){
+			if(cnt % moduloThreshold == 0){
+				xValues.push_back(l.m_point1.m_x + l.m_simpleTranslation.m_x);
+				yValues.push_back(l.m_point1.m_y + l.m_simpleTranslation.m_y);
+			}
+			++cnt;
+		}
+	}
+
+	for (const PolyLine &pl: m_polylines) {
+		if(listAllBlocksWithNoInsertPoint.find(pl.m_block) != listAllBlocksWithNoInsertPoint.end()){
+			if(cnt % moduloThreshold == 0){
+				if(pl.m_polyline.size() > 0){
+					xValues.push_back(pl.m_polyline[0].m_x + pl.m_simpleTranslation.m_x);
+					yValues.push_back(pl.m_polyline[0].m_y + pl.m_simpleTranslation.m_y);
+				}
+			}
+			++cnt;
+		}
+	}
+
+	for (const Circle &c: m_circles) {
+		if(listAllBlocksWithNoInsertPoint.find(c.m_block) != listAllBlocksWithNoInsertPoint.end()){
+			if(cnt % moduloThreshold == 0){
+				xValues.push_back(c.m_center.m_x + c.m_simpleTranslation.m_x);
+				yValues.push_back(c.m_center.m_y + c.m_simpleTranslation.m_y);
+			}
+			++cnt;
+		}
+	}
+
+	for (const Ellipse &e: m_ellipses) {
+		if(listAllBlocksWithNoInsertPoint.find(e.m_block) != listAllBlocksWithNoInsertPoint.end()){
+			if(cnt % moduloThreshold == 0){
+				xValues.push_back(e.m_center.m_x + e.m_simpleTranslation.m_x);
+				yValues.push_back(e.m_center.m_y + e.m_center.m_y);
+			}
+			++cnt;
+		}
+	}
+
+	for (const Arc &a: m_arcs) {
+		if(listAllBlocksWithNoInsertPoint.find(a.m_block) != listAllBlocksWithNoInsertPoint.end()){
+			if(cnt % moduloThreshold == 0){
+				xValues.push_back(a.m_center.m_x + a.m_simpleTranslation.m_x);
+				yValues.push_back(a.m_center.m_y + a.m_center.m_y);
+			}
+			++cnt;
+		}
+	}
+
+	for (const Solid &s: m_solids) {
+		if (listAllBlocksWithNoInsertPoint.find(s.m_block) != listAllBlocksWithNoInsertPoint.end()){
+			if(cnt % moduloThreshold == 0){
+				xValues.push_back(s.m_point1.m_x + s.m_simpleTranslation.m_x);
+				yValues.push_back(s.m_point1.m_y + s.m_simpleTranslation.m_y);
+			}
+			++cnt;
+		}
+	}
+
+	for (const Text &t: m_texts) {
+		if(listAllBlocksWithNoInsertPoint.find(t.m_block) != listAllBlocksWithNoInsertPoint.end()){
+			if(cnt % moduloThreshold == 0){
+				xValues.push_back(t.m_basePoint.m_x + t.m_simpleTranslation.m_x);
+				yValues.push_back(t.m_basePoint.m_y + t.m_simpleTranslation.m_y);
+			}
+			++cnt;
+		}
+	}
+
+	for (const LinearDimension &ld: m_linearDimensions) {
+		if(listAllBlocksWithNoInsertPoint.find(ld.m_block) != listAllBlocksWithNoInsertPoint.end()){
+			if(cnt % moduloThreshold == 0){
+				xValues.push_back(ld.m_dimensionPoint.m_x + ld.m_simpleTranslation.m_x);
+				yValues.push_back(ld.m_dimensionPoint.m_y + ld.m_simpleTranslation.m_y);
+			}
+			++cnt;
+		}
+	}
+
+	std::nth_element(xValues.begin(), xValues.begin() + xValues.size() / 2, xValues.end());
+	std::nth_element(yValues.begin(), yValues.begin() + yValues.size() / 2, yValues.end());
+
+	unsigned int x = xValues[xValues.size() / 2 - 1];
+	unsigned int y = yValues[yValues.size() / 2 - 1];
+	return IBKMK::Vector3D(x, y, 0);
+}
+
 
 const Drawing::Block *Drawing::findParentBlock(const Insert &i) const {
 	if (i.m_parentBlock == nullptr)

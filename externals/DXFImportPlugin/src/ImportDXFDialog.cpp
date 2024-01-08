@@ -165,7 +165,7 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 			m_drawing.compensateCoordinates();
 
 		// calculate center
-		IBKMK::Vector3D center = m_drawing.weightedCenter(m_nextId);
+		IBKMK::Vector3D center = m_drawing.weightedCenterMedian(m_nextId);
 		m_drawing.m_origin = center;
 
 		// Drawing should be at least bigger than 150 m
