@@ -35,7 +35,9 @@ ImportDXFDialog::ImportDXFDialog(QWidget *parent) :
 	m_ui->comboBoxUnit->addItem(tr("Centimeter"), SU_Centimeter);
 	m_ui->comboBoxUnit->addItem(tr("Millimeter"), SU_Millimeter);
 
-//	m_ui->checkBoxFixFonts->setHidden(true);
+	// we start with simple mode
+	m_ui->checkBoxShowDetails->setChecked(false);
+	m_detailedMode = false;
 
 	m_ui->progressBar->setValue(0);
 	m_ui->progressBar->update();
@@ -60,7 +62,9 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 		m_ui->lineEditDrawingName->setFocus();
 	}
 
-	m_ui->pushButtonImport->setEnabled(false);
+	if (m_detailedMode)
+		m_ui->pushButtonImport->setEnabled(false);
+
 	m_filePath = fname;
 
 	QFileInfo finfo(fname);
@@ -128,7 +132,8 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 			m_drawing.m_linearDimensions.clear();
 		}
 
-		m_ui->pushButtonImport->setEnabled(success);
+		if (m_detailedMode)
+			m_ui->pushButtonImport->setEnabled(success);
 
 		if (!success)
 			throw IBK::Exception(IBK::FormatString("Import of DXF-File was not successful!"), FUNC_ID);
@@ -219,6 +224,8 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 
 void ImportDXFDialog::on_pushButtonImport_clicked() {
+	if (!m_detailedMode)
+		on_pushButtonConvert_clicked();
 	m_returnCode = AddDrawings;
 	accept();
 }
@@ -966,4 +973,18 @@ void DRW_InterfaceImpl::writeAppId(){}
 
 
 
+
+
+void ImportDXFDialog::on_checkBoxShowDetails_stateChanged(int arg1) {
+	m_detailedMode = arg1;
+	m_ui->groupBox->setVisible(m_detailedMode);
+	m_ui->pushButtonConvert->setVisible(m_detailedMode);
+	m_ui->plainTextEditLogWindow->setVisible(m_detailedMode);
+	m_ui->pushButtonImport->setEnabled(!m_detailedMode);
+
+	// adjust size
+	QSize preferredSize = sizeHint();
+	preferredSize.setWidth(width()); // Maintain the current width
+	setFixedSize(preferredSize);
+}
 
