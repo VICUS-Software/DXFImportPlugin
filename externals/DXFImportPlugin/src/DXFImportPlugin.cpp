@@ -138,7 +138,7 @@ QString DXFImportPlugin::title() const {
 }
 
 QString DXFImportPlugin::importMenuCaption() const {
-	return tr("Import DXF file ...");
+	return tr("DXF file ...");
 }
 
 void DXFImportPlugin::setLanguage(QString langId, QString appname) {
