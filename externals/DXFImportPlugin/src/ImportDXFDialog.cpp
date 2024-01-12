@@ -682,9 +682,11 @@ void DRW_InterfaceImpl::addPolyline(const DRW_Polyline& data){
 	m_drawing->m_zCounter++;
 	newPolyline.m_polyline = std::vector<IBKMK::Vector2D>();
 
+	// if data.vertexcount is not set, use size of vertlist
+	int vertexcount = data.vertexcount;
+	if(vertexcount == 0) vertexcount = data.vertlist.size();
 	// iterateover data.vertlist, insert all vertices of Polyline into vector
-	for (int i = 0; i <= data.vertexcount; i++){
-//	for (int i = 0; i < data.vertlist.size(); i++){
+	for (int i = 0; i < vertexcount; i++){
 		IBKMK::Vector2D point(data.vertlist[i]->basePoint.x, data.vertlist[i]->basePoint.y);
 		if(m_activeBlock != nullptr) {
 			point -= m_activeBlock->m_basePoint;
