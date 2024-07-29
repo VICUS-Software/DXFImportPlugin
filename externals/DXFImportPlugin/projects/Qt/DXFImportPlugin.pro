@@ -10,7 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4):  QT += widgets
 
 TEMPLATE = lib
 CONFIG += plugin
-CONFIG += shared
+CONFIG += static_and_dynamic
 
 CONFIG += c++17
 
@@ -20,41 +20,40 @@ CONFIG += c++17
 
 # check if 32 or 64 bit version and set prefix variable for using in output paths
 contains(QT_ARCH, i386): {
-DIR_PREFIX =
+    DIR_PREFIX =
 } else {
-DIR_PREFIX = _x64
+    DIR_PREFIX = _x64
 }
 
 INCLUDEPATH = \
-../../src \
-../../../../externals/libdxfrw/src \
-../../../../externals/libdxfrw/src/intern \
-../../../../externals/IBK/src \
-../../../../externals/IBKMK/src \
-../../../../externals/QtExt/src \
-../../../../externals/TiCPP/src
+    ../../src \
+	../../../../externals/libdxfrw/src \
+	../../../../externals/libdxfrw/src/intern \
+	../../../../externals/IBK/src \
+	../../../../externals/IBKMK/src \
+	../../../../externals/QtExt/src \
+	../../../../externals/TiCPP/src
 
 CONFIG(debug, debug|release) {
-OBJECTS_DIR = debug$${DIR_PREFIX}
-windows {
-DESTDIR = ../../../lib$${DIR_PREFIX}
-DLLDESTDIR = ../../../../bin/debug$${DIR_PREFIX}
-}
+    OBJECTS_DIR = debug$${DIR_PREFIX}
+	windows {
+	    DESTDIR = ../../../lib$${DIR_PREFIX}
+		DLLDESTDIR = ../../../../bin/debug$${DIR_PREFIX}
+	}
 	else {
-	DESTDIR = ../../../../bin/debug$${DIR_PREFIX}
+	    DESTDIR = ../../../../bin/debug$${DIR_PREFIX}
 	}
 }
 else {
-OBJECTS_DIR = release
-windows {
-DESTDIR = ../../../lib$${DIR_PREFIX}
-DLLDESTDIR = ../../../../bin/release$${DIR_PREFIX}
-}
+    OBJECTS_DIR = release
+	windows {
+	    DESTDIR = ../../../lib$${DIR_PREFIX}
+		DLLDESTDIR = ../../../../bin/release$${DIR_PREFIX}
+	}
 	else {
-	DESTDIR = ../../../../bin/release$${DIR_PREFIX}
+	    DESTDIR = ../../../../bin/release$${DIR_PREFIX}
 	}
 }
-
 
 !windows {
 #    QMAKE_POST_LINK += ../../../lib$${DIR_PREFIX}/libDXFImportPlugin.so ../../../../bin/debug$${DIR_PREFIX}/libDXFImportPlugin.so
@@ -64,42 +63,43 @@ MOC_DIR = moc
 UI_DIR = ui
 
 SOURCES += \
-../../src/Constants.cpp \
-../../src/DXFImportPlugin.cpp  \
-../../src/Drawing.cpp \
-../../src/DrawingLayer.cpp \
-../../src/ImportDXFDialog.cpp \
-../../src/Object.cpp \
-../../src/Utilities.cpp
+    ../../src/Constants.cpp \
+	../../src/DXFImportPlugin.cpp  \
+	../../src/Drawing.cpp \
+	../../src/DrawingLayer.cpp \
+	../../src/ImportDXFDialog.cpp \
+	../../src/Object.cpp \
+	../../src/Utilities.cpp
 
 HEADERS += \
-../../src/Constants.h \
-../../src/Drawing.h \
-../../src/DrawingLayer.h \
-../../src/ImportDXFDialog.h \
-../../src/Object.h \
-../../src/RotationMatrix.h \
-../../src/SVCommonPluginInterface.h \
-../../src/SVImportPluginInterface.h \
-../../src/DXFImportPlugin.h \
-../../src/Utilities.h
+    ../../src/Constants.h \
+	../../src/Drawing.h \
+	../../src/DrawingLayer.h \
+	../../src/ImportDXFDialog.h \
+	../../src/Object.h \
+	../../src/RotationMatrix.h \
+	../../src/SVCommonPluginInterface.h \
+	../../src/SVImportPluginInterface.h \
+	../../src/DXFImportPlugin.h \
+	../../src/Utilities.h
 
 QMAKE_LIBDIR += ../../../../externals/lib$${DIR_PREFIX}
 
 LIBS += -L../../../../externals/lib$${DIR_PREFIX}
 
 LIBS += \
--lTiCPP \
--lIBKMK \
--llibdxfrw \
--lQtExt \
--lIBK
+    -lTiCPP \
+	-lIBKMK \
+	-llibdxfrw \
+	-lQtExt \
+	-ldxflib \
+	-lIBK
 
 win32:LIBS += -liphlpapi
 win32:LIBS += -lshell32
 
 win32-msvc* {
-QMAKE_CXXFLAGS += /std:c++17
+    QMAKE_CXXFLAGS += /std:c++17
 }
 
 # Default rules for deployment.
@@ -113,5 +113,5 @@ TRANSLATIONS += ../../resources/translations/DXFImportPlugin_de.ts
 CODECFORSRC = UTF-8
 
 FORMS += \
-../../src/ImportDXFDialog.ui
+    ../../src/ImportDXFDialog.ui
 

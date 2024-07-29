@@ -11,7 +11,7 @@
 
 #include <tinyxml.h>
 
-static int PRECISION = 15;  // precision of floating point values for output writing
+static int PRECISION = 16;  // precision of floating point values for output writing
 
 /*! IBKMK::Vector3D to QVector3D conversion macro. */
 inline QVector3D IBKVector2QVector(const IBKMK::Vector3D & v) {

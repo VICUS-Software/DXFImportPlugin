@@ -11,7 +11,7 @@
 
 #include <IBKMK_3DCalculations.h>
 
-#include <libdxfrw.h>
+#include <dl_creationinterface.h>
 
 
 
@@ -81,7 +81,7 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 												 m_ui->lineEditCustomCenterY->value(),
 												 0);
 		// move to origin
-		m_drawing.moveToOrigin();
+		// m_drawing.moveToOrigin();
 	}
 
 //	if (m_ui->checkBoxFixFonts->isChecked())
@@ -168,11 +168,11 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		IBKMK::Vector3D bounding = boundingBox(&m_drawing, dummy, false);
 
 		// compensate coordinates
-		m_drawing.compensateCoordinates();
+		// m_drawing.compensateCoordinates();
 
 		// calculate center
 		IBKMK::Vector3D center = m_drawing.weightedCenterMedian(m_nextId);
-		m_drawing.m_origin = center;
+		m_drawing.m_origin = -1.0 * center;
 
 		// Drawing should be at least bigger than 150 m
 		double AUTO_SCALING_THRESHOLD = 1000;
@@ -462,6 +462,8 @@ void DRW_InterfaceImpl::addBlock(const DRW_Block& data){
 	// Set name
 	newBlock.m_name = QString::fromStdString(data.name);
 
+	// qDebug() << "Block name: " << newBlock.m_name;
+
 	// Set color
 	newBlock.m_color = QColor();
 
@@ -483,8 +485,8 @@ void DRW_InterfaceImpl::addBlock(const DRW_Block& data){
 
 void DRW_InterfaceImpl::setBlock(const int /*handle*/){}
 void DRW_InterfaceImpl::endBlock(){
-	if (m_activeBlock != nullptr)
-		m_activeBlock->m_basePoint = IBKMK::Vector2D(0,0);
+	// if (m_activeBlock != nullptr)
+	// 	m_activeBlock->m_basePoint = IBKMK::Vector2D(0,0);
 	// Active block not existing
 	m_activeBlock = nullptr;
 }
@@ -504,7 +506,7 @@ void DRW_InterfaceImpl::addPoint(const DRW_Point& data){
 	newPoint.m_id = (*m_nextId)++;
 	if (m_activeBlock != nullptr) {
 		newPoint.m_blockName = m_activeBlock->m_name;
-		newPoint.m_point -= m_activeBlock->m_basePoint;
+		// newPoint.m_point -= m_activeBlock->m_basePoint;
 	}
 	/* value 256 means use defaultColor, value 7 is black */
 	if(!(data.color == 256 || data.color == 7))
@@ -530,10 +532,11 @@ void DRW_InterfaceImpl::addLine(const DRW_Line& data){
 	newLine.m_layerName = QString::fromStdString(data.layer);
 
 	newLine.m_id = (*m_nextId)++;
+
 	if (m_activeBlock != nullptr) {
 		newLine.m_blockName = m_activeBlock->m_name;
-		newLine.m_point1 -= m_activeBlock->m_basePoint;
-		newLine.m_point2 -= m_activeBlock->m_basePoint;
+		// newLine.m_point1 -= m_activeBlock->m_basePoint;
+		// newLine.m_point2 -= m_activeBlock->m_basePoint;
 	}
 	/* value 256 means use defaultColor, value 7 is black */
 	/* value 256 means use defaultColor, value 7 is black */
@@ -564,7 +567,7 @@ void DRW_InterfaceImpl::addArc(const DRW_Arc& data){
 	newArc.m_id = (*m_nextId)++;
 	if (m_activeBlock != nullptr) {
 		newArc.m_blockName = m_activeBlock->m_name;
-		newArc.m_center -= m_activeBlock->m_basePoint;
+		// newArc.m_center -= m_activeBlock->m_basePoint;
 	}
 
 	/* value 256 means use defaultColor, value 7 is black */
@@ -592,7 +595,7 @@ void DRW_InterfaceImpl::addCircle(const DRW_Circle& data){
 	newCircle.m_id = (*m_nextId)++;
 	if (m_activeBlock != nullptr) {
 		newCircle.m_blockName = m_activeBlock->m_name;
-		newCircle.m_center -= m_activeBlock->m_basePoint;
+		// newCircle.m_center -= m_activeBlock->m_basePoint;
 	}
 
 	/* value 256 means use defaultColor, value 7 is black */
@@ -622,7 +625,7 @@ void DRW_InterfaceImpl::addEllipse(const DRW_Ellipse& data){
 	newEllipse.m_id = (*m_nextId)++;
 	if (m_activeBlock != nullptr) {
 		newEllipse.m_blockName = m_activeBlock->m_name;
-		newEllipse.m_center -= m_activeBlock->m_basePoint;
+		// newEllipse.m_center -= m_activeBlock->m_basePoint;
 	}
 
 	/* value 256 means use defaultColor, value 7 is black */
@@ -650,13 +653,15 @@ void DRW_InterfaceImpl::addLWPolyline(const DRW_LWPolyline& data){
 	for(size_t i = 0; i < data.vertlist.size(); i++){
 		IBKMK::Vector2D point(data.vertlist[i]->x, data.vertlist[i]->y);
 		newPolyline.m_polyline.push_back(point);
+
+		// qDebug() << QString("PL Point | %1 %2").arg(point.m_x).arg(point.m_y);
 	}
 
 	if (m_activeBlock != nullptr) {
 		newPolyline.m_blockName = m_activeBlock->m_name;
-		for(IBKMK::Vector2D &pl : newPolyline.m_polyline){
-			pl -= m_activeBlock->m_basePoint;
-		}
+		// for(IBKMK::Vector2D &pl : newPolyline.m_polyline){
+		// 	pl -= m_activeBlock->m_basePoint;
+		// }
 	}
 
 
@@ -685,12 +690,18 @@ void DRW_InterfaceImpl::addPolyline(const DRW_Polyline& data){
 	// if data.vertexcount is not set, use size of vertlist
 	int vertexcount = data.vertexcount;
 	if(vertexcount == 0) vertexcount = data.vertlist.size();
+
+	// qDebug() << " ";
+
 	// iterateover data.vertlist, insert all vertices of Polyline into vector
 	for (int i = 0; i < vertexcount; i++){
 		IBKMK::Vector2D point(data.vertlist[i]->basePoint.x, data.vertlist[i]->basePoint.y);
-		if(m_activeBlock != nullptr) {
-			point -= m_activeBlock->m_basePoint;
-		}
+		// if(m_activeBlock != nullptr) {
+		// 	point -= m_activeBlock->m_basePoint;
+		// }
+
+		// qDebug() << QString("PL Point | %1 %2").arg(point.m_x).arg(point.m_y);
+
 		newPolyline.m_polyline.push_back(point);
 	}
 
@@ -732,7 +743,7 @@ void DRW_InterfaceImpl::addInsert(const DRW_Insert& data){
 	newInsert.m_insertionPoint = IBKMK::Vector2D(data.basePoint.x, data.basePoint.y);
 	if (m_activeBlock != nullptr) {
 		newInsert.m_parentBlockName = m_activeBlock->m_name;
-		newInsert.m_insertionPoint -= m_activeBlock->m_basePoint;
+		// newInsert.m_insertionPoint -= m_activeBlock->m_basePoint;
 	}
 
 	m_drawing->m_inserts.push_back(newInsert);
@@ -757,10 +768,10 @@ void DRW_InterfaceImpl::addSolid(const DRW_Solid& data){
 	newSolid.m_id = (*m_nextId)++;
 	if (m_activeBlock != nullptr) {
 		newSolid.m_blockName = m_activeBlock->m_name;
-		newSolid.m_point1 -= m_activeBlock->m_basePoint;
-		newSolid.m_point2 -= m_activeBlock->m_basePoint;
-		newSolid.m_point3 -= m_activeBlock->m_basePoint;
-		newSolid.m_point4 -= m_activeBlock->m_basePoint;
+		// newSolid.m_point1 -= m_activeBlock->m_basePoint;
+		// newSolid.m_point2 -= m_activeBlock->m_basePoint;
+		// newSolid.m_point3 -= m_activeBlock->m_basePoint;
+		// newSolid.m_point4 -= m_activeBlock->m_basePoint;
 	}
 
 	/* value 256 means use defaultColor, value 7 is black */
@@ -800,7 +811,7 @@ void DRW_InterfaceImpl::addMText(const DRW_MText& data){
 	newText.m_id = (*m_nextId)++;
 	if (m_activeBlock != nullptr) {
 		newText.m_blockName = m_activeBlock->m_name;
-		newText.m_basePoint -= m_activeBlock->m_basePoint;
+		// newText.m_basePoint -= m_activeBlock->m_basePoint;
 	}
 
 	newText.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
@@ -828,7 +839,7 @@ void DRW_InterfaceImpl::addText(const DRW_Text& data){
 	newText.m_id = (*m_nextId)++;
 	if (m_activeBlock != nullptr) {
 		newText.m_blockName = m_activeBlock->m_name;
-		newText.m_basePoint -= m_activeBlock->m_basePoint;
+		// newText.m_basePoint -= m_activeBlock->m_basePoint;
 	}
 
 	newText.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data.lWeight);
@@ -869,10 +880,10 @@ void DRW_InterfaceImpl::addDimLinear(const DRW_DimLinear *data){
 	newLinearDimension.m_id = (*m_nextId)++;
 	if (m_activeBlock != nullptr) {
 		newLinearDimension.m_blockName = m_activeBlock->m_name;
-		def -= m_activeBlock->m_basePoint;
-		def1 -= m_activeBlock->m_basePoint;
-		def2 -= m_activeBlock->m_basePoint;
-		text -= m_activeBlock->m_basePoint;
+		// def -= m_activeBlock->m_basePoint;
+		// def1 -= m_activeBlock->m_basePoint;
+		// def2 -= m_activeBlock->m_basePoint;
+		// text -= m_activeBlock->m_basePoint;
 	}
 
 	newLinearDimension.m_lineWeight = DRW_LW_Conv::lineWidth2dxfInt(data->lWeight);
@@ -895,7 +906,7 @@ void DRW_InterfaceImpl::addDimLinear(const DRW_DimLinear *data){
 
 
 	/// Linear dimension needs to be fully constructed.
-	/// Dimension point can belongs to point 1 or 2 and has also an angle
+	/// Dimension point can belong to point 1 or 2 and has also an angle
 	/// For more information look here:
 	/// https://ezdxf.readthedocs.io/en/stable/tutorials/linear_dimension.html
 
