@@ -14,7 +14,6 @@ SUBDIRS += DXFImportPlugin \
 DXFTestBed.file = ../../DXFTestBed/projects/Qt/DXFTestBed.pro
 DXFImportPlugin.file = ../../externals/DXFImportPlugin/projects/Qt/DXFImportPlugin.pro
 
-
 IBK.file = ../../externals/IBK/projects/Qt/IBK.pro
 IBKMK.file = ../../externals/IBKMK/projects/Qt/IBKMK.pro
 TiCPP.file = ../../externals/TiCPP/projects/Qt/TiCPP.pro
@@ -23,5 +22,5 @@ libdxfrw.file = ../../externals/libdxfrw/projects/Qt/libdxfrw.pro
 
 IBKMK.depends = IBK
 QtExt.depends = IBK
-DXFTestBed.depends = DXFImportPlugin IBK IBKMK TiCPP QtExt libdxfrw dxflib
+DXFTestBed.depends = DXFImportPlugin IBK IBKMK TiCPP QtExt libdxfrw
 DXFImportPlugin.depends = IBK IBKMK TiCPP QtExt libdxfrw
