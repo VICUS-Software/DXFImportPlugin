@@ -18,7 +18,7 @@ INCLUDEPATH += \
 HEADERS += \
 ../../src/drw_classes.h \
 ../../src/drw_entities.h \
-	../../src/drw_header.h \
+../../src/drw_header.h \
 	../../src/drw_interface.h \
 	../../src/drw_objects.h \
 	../../src/intern/drw_cptable932.h \
@@ -46,7 +46,7 @@ HEADERS += \
 SOURCES += \
 ../../src/drw_classes.cpp \
 ../../src/drw_entities.cpp \
-	../../src/drw_header.cpp \
+../../src/drw_header.cpp \
 	../../src/drw_objects.cpp \
 	../../src/intern/drw_dbg.cpp \
 	../../src/intern/drw_textcodec.cpp \
@@ -65,3 +65,6 @@ SOURCES += \
 	../../src/libdxfrw.cpp
 
 QMAKE_CXXFLAGS += -Wall
+
+TARGET = dxflib
+

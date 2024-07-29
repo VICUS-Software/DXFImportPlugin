@@ -11,8 +11,6 @@
 
 #include <IBKMK_3DCalculations.h>
 
-#include <dl_creationinterface.h>
-
 
 
 ImportDXFDialog::ImportDXFDialog(QWidget *parent) :
