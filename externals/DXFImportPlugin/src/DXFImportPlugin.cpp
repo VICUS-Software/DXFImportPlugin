@@ -152,6 +152,8 @@ void DXFImportPlugin::setLanguage(QString langId, QString appname) {
 	QDir baseDir;
 	baseDir.mkpath(QtExt::Directories::userDataDir());
 
+	// reset the appname here, so that the correct translation file can be found
+	QtExt::Directories::appname = "DXFImportPlugin";
 	QtExt::LanguageHandler::instance().installTranslator(langId);
 }
 

@@ -46,27 +46,32 @@
         <translation>Dialog</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.ui" line="44"/>
+        <location filename="../../src/ImportDXFDialog.ui" line="119"/>
+        <source>show detailed settings</source>
+        <translation>zeige detaillierte Einstellungen</translation>
+    </message>
+    <message>
+        <location filename="../../src/ImportDXFDialog.ui" line="137"/>
         <source>Convert DXF-File</source>
         <translation>Konvertiere DXF Datei</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.ui" line="66"/>
+        <location filename="../../src/ImportDXFDialog.ui" line="36"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.ui" line="75"/>
+        <location filename="../../src/ImportDXFDialog.ui" line="45"/>
         <source>Import Text (experimental)</source>
         <translation>Importiere Text (experimentell)</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.ui" line="87"/>
+        <location filename="../../src/ImportDXFDialog.ui" line="57"/>
         <source>Specify custom center:</source>
         <translation>Eigenen Mittelpunkt definieren:</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.ui" line="116"/>
+        <location filename="../../src/ImportDXFDialog.ui" line="86"/>
         <source>Move drawing to center</source>
         <translation>Zeichnung zu Mittelpunkt verschieben</translation>
     </message>
@@ -75,12 +80,12 @@
         <translation type="vanished">Eigenen Ursprung definieren:</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.ui" line="94"/>
+        <location filename="../../src/ImportDXFDialog.ui" line="64"/>
         <source>x</source>
         <translation>x</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.ui" line="104"/>
+        <location filename="../../src/ImportDXFDialog.ui" line="74"/>
         <source>y</source>
         <translation>y</translation>
     </message>
@@ -89,17 +94,17 @@
         <translation type="obsolete">Zeichung zu Ursprung</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.ui" line="145"/>
+        <location filename="../../src/ImportDXFDialog.ui" line="112"/>
         <source>Scaling unit:</source>
         <translation>Maßeinheit:</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.ui" line="152"/>
+        <location filename="../../src/ImportDXFDialog.ui" line="26"/>
         <source>Name:</source>
         <translation>Name:</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.ui" line="174"/>
+        <location filename="../../src/ImportDXFDialog.ui" line="180"/>
         <source>Import drawings to project</source>
         <translation>Zeichnungen in Projekt importieren</translation>
     </message>
@@ -139,27 +144,27 @@
         <translation>Millimeter</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.cpp" line="45"/>
+        <location filename="../../src/ImportDXFDialog.cpp" line="47"/>
         <source>Custom center x coordinate</source>
         <translation>Eigener Mittelpunkt x-Koordinate</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.cpp" line="47"/>
+        <location filename="../../src/ImportDXFDialog.cpp" line="49"/>
         <source>Custom center y coordinate</source>
         <translation>Eigener Mittelpunkt y-Koordinate</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.cpp" line="58"/>
+        <location filename="../../src/ImportDXFDialog.cpp" line="60"/>
         <source>Please enter a descriptive name!</source>
         <translation>Bitte geben Sie einen Namen ein!</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.cpp" line="105"/>
+        <location filename="../../src/ImportDXFDialog.cpp" line="109"/>
         <source>DXF Conversion</source>
         <translation>DXF Konvertierung</translation>
     </message>
     <message>
-        <location filename="../../src/ImportDXFDialog.cpp" line="105"/>
+        <location filename="../../src/ImportDXFDialog.cpp" line="109"/>
         <source>File %1 does not exist.</source>
         <translation>Datei %1 existiert nicht.</translation>
     </message>
