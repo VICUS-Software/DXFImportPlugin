@@ -171,7 +171,7 @@ void Drawing::generateInsertGeometries(unsigned int &nextId) {
 
 template <typename t>
 void addPickPoints(const std::vector<t> &objects, const Drawing &d, std::map<unsigned int, std::vector<IBKMK::Vector3D>> &verts,
-				   const Drawing::Block *block = nullptr) {
+				   const Drawing::Block *block = nullptr, const double scalingFactor = 1.0) {
 	for (const t& obj : objects) {
 		bool isBlockDefined = block != nullptr;
 		bool hasBlock = obj.m_block != nullptr;
@@ -182,7 +182,7 @@ void addPickPoints(const std::vector<t> &objects, const Drawing &d, std::map<uns
 		if (isBlockDefined && hasBlock && block->m_name != obj.m_block->m_name)
 			continue;
 
-		const std::vector<IBKMK::Vector3D> &objVerts = d.points3D(obj.points2D(), obj.m_zPosition, obj.m_trans);
+		const std::vector<IBKMK::Vector3D> &objVerts = d.points3D(obj.points2D(), obj.m_zPosition, obj.m_trans, scalingFactor);
 		verts[obj.m_id] = objVerts;
 	}
 }
@@ -211,15 +211,16 @@ const std::map<unsigned int, std::vector<IBKMK::Vector3D>> &Drawing::pickPoints(
 }
 
 
-const std::vector<IBKMK::Vector3D> Drawing::points3D(const std::vector<IBKMK::Vector2D> &verts, unsigned int zPosition, const QMatrix4x4 &trans) const {
+const std::vector<IBKMK::Vector3D> Drawing::points3D(const std::vector<IBKMK::Vector2D> &verts,
+													 unsigned int zPosition, const QMatrix4x4 &trans, const double &scalingFactor) const {
 
 	std::vector<IBKMK::Vector3D> points3D(verts.size());
 
 	for (unsigned int i=0; i < verts.size(); ++i) {
 		const IBKMK::Vector2D &v2D = verts[i];
 		double zCoordinate = zPosition * Z_MULTIPLYER;
-		IBKMK::Vector3D v3D = IBKMK::Vector3D(v2D.m_x * m_scalingFactor,
-											  v2D.m_y * m_scalingFactor,
+		IBKMK::Vector3D v3D = IBKMK::Vector3D(v2D.m_x * scalingFactor,
+											  v2D.m_y * scalingFactor,
 											  zCoordinate);
 
 		QVector3D qV3D = m_rotationMatrix.toQuaternion() * IBKVector2QVector(v3D);

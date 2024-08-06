@@ -92,7 +92,6 @@ LIBS += \
 	-lIBKMK \
 	-llibdxfrw \
 	-lQtExt \
-	-ldxflib \
 	-lIBK
 
 win32:LIBS += -liphlpapi

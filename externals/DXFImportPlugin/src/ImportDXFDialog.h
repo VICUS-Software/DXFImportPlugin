@@ -48,7 +48,7 @@ public:
 
 	static IBKMK::Vector3D boundingBox(const Drawing * drawing,
 									   IBKMK::Vector3D &center,
-									   bool transformPoints);
+									   bool transformPoints, const double scalingFactor);
 
 private slots:
 	void on_comboBoxUnit_activated(int index);
@@ -99,6 +99,12 @@ private:
 
 	bool					m_detailedMode = false;
 
+	/*! Dxf Scaling factor from "$INSUNIT". */
+	double					m_dxfScalingFactor = 1.0;
+
+	/*! Dxf Scaling factor from "$INSUNIT". */
+	std::string				m_dxfScalingUnit = "";
+
 };
 
 /* Implementation of DRW_Interface. A dxf file will be read from top to bottom,
@@ -115,10 +121,15 @@ class DRW_InterfaceImpl : public DRW_Interface {
 
 	bool				m_emptyLayerExists = false;
 
+	double				*m_dxfScalingFactor = nullptr;
+
+	std::string			*m_dxfScalingUnit = nullptr;
+
 public :
 
 	/*! C'tor */
-	DRW_InterfaceImpl(Drawing *drawing, unsigned int &nextId);
+	DRW_InterfaceImpl(Drawing *drawing, double *dxfScalingFactor,
+					  std::string *dxfScalingUnit, unsigned int &nextId);
 
 	/** Called when header is parsed.  */
 	void addHeader(const DRW_Header* data) override;

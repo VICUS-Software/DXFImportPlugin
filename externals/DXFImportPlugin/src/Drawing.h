@@ -422,7 +422,8 @@ public:
 	const std::map<unsigned int, std::vector<IBKMK::Vector3D>> &pickPoints() const;
 
 	/*! Generates 3D Points from 2D points by applying transformation from drawing. */
-	const std::vector<IBKMK::Vector3D> points3D(const std::vector<IBKMK::Vector2D> &verts, unsigned int zPosition, const QMatrix4x4 &trans = QMatrix4x4()) const;
+	const std::vector<IBKMK::Vector3D> points3D(const std::vector<IBKMK::Vector2D> &verts, unsigned int zPosition,
+												const QMatrix4x4 &trans = QMatrix4x4(), const double &scalingFactor = 1.0) const;
 
 	/*! Returns the normal vector of the drawing. */
 	const IBKMK::Vector3D normal() const;
@@ -458,6 +459,7 @@ public:
 	RotationMatrix															m_rotationMatrix	= RotationMatrix(QQuaternion(1.0,0.0,0.0,0.0)); // XML:E
 	/*! scale factor */
 	double																	m_scalingFactor		= 1.0;											// XML:E
+	std::string																m_scalingUnit;
 
 	/*! list of blocks */
 	std::vector<Block>														m_blocks;			// XML:E

@@ -12,7 +12,6 @@
 #include <IBKMK_3DCalculations.h>
 
 
-
 ImportDXFDialog::ImportDXFDialog(QWidget *parent) :
 	QDialog(parent),
 	m_ui(new Ui::ImportDXFDialog)
@@ -158,12 +157,19 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 		double scalingFactor[NUM_SU] = {0.001, 1.0, 0.1, 0.01, 0.001};
 
+		std::map<ScaleUnit, std::string> unit {
+			{SU_Meter,  "Meter"},
+			{SU_Centimeter,  "Centimeter"},
+			{SU_Decimeter,  "Decimeter"},
+			{SU_Millimeter,  "Millimeter"},
+		};
+
 		m_ui->progressBar->setValue(3);
 		m_ui->progressBar->setFormat("Calculate bounding box and center %p%");
 
 		IBKMK::Vector3D dummy;
 		m_drawing.updatePointer();
-		IBKMK::Vector3D bounding = boundingBox(&m_drawing, dummy, false);
+		IBKMK::Vector3D bounding = boundingBox(&m_drawing, dummy, false, 1.0);
 
 		// compensate coordinates
 		// m_drawing.compensateCoordinates();
@@ -173,28 +179,82 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		m_drawing.m_origin = -1.0 * center;
 
 		// Drawing should be at least bigger than 150 m
-		double AUTO_SCALING_THRESHOLD = 1000;
+		double AUTO_SCALING_MIN_THRESHOLD =	  800;
+		double AUTO_SCALING_MAX_THRESHOLD =  2000;
+		std::string foundUnit;
 		if (su == SU_Auto) {
 			bool foundAutoScaling = false;
-			for (unsigned int i=1; i<NUM_SU; ++i) {
+			for (unsigned int i=1; i<NUM_SU; ++i) { // skip auto scaling
 
-				if (scalingFactor[i] * bounding.m_x > AUTO_SCALING_THRESHOLD)
+				if (scalingFactor[i] * bounding.m_x > AUTO_SCALING_MIN_THRESHOLD)
 					continue;
 
-				if (scalingFactor[i] * bounding.m_y > AUTO_SCALING_THRESHOLD)
+				if (scalingFactor[i] * bounding.m_y > AUTO_SCALING_MIN_THRESHOLD)
 					continue;
 
 				scalingFactor[SU_Auto] = scalingFactor[i];
+				foundUnit = unit[(ScaleUnit)i];
 				foundAutoScaling = true;
 				break;
 			}
 
-			// for very large coordinates we assume meter again
-			if (bounding.m_x > 1e6 && bounding.m_y > 1e6)
-				scalingFactor[SU_Auto] = scalingFactor[SU_Meter];
+			if (!foundAutoScaling) {
+				for (unsigned int i=SU_Millimeter; i>0; --i) {
 
-			if (foundAutoScaling)
+					if (scalingFactor[i] * bounding.m_x < AUTO_SCALING_MAX_THRESHOLD)
+						continue;
+
+					if (scalingFactor[i] * bounding.m_y < AUTO_SCALING_MAX_THRESHOLD)
+						continue;
+
+					scalingFactor[SU_Auto] = scalingFactor[i];
+					foundUnit = unit[(ScaleUnit)i];
+					foundAutoScaling = true;
+					break;
+				}
+			}
+
+			if (foundAutoScaling) {
 				log += QString("Found auto scaling unit: %1 m\n").arg(scalingFactor[SU_Auto]);
+				if (!IBK::near_equal(scalingFactor[SU_Auto], m_dxfScalingFactor)) {
+					log += QString("Scaling factor from header does not match auto-determined scale factor.\n");
+
+					// Create a message box
+					QMessageBox msgBox(this);
+					msgBox.setWindowTitle(tr("Choose scaling factor"));
+					msgBox.setText(tr("Scaling factor from header does not match auto-determined "
+									  "scale factor.\nChoose the scaling factor to use:"));
+
+					IBKMK::Vector3D boundingDxf = boundingBox(&m_drawing, dummy, false, m_dxfScalingFactor);
+					IBKMK::Vector3D boundingAuto = boundingBox(&m_drawing, dummy, false, scalingFactor[SU_Auto]);
+
+					// Add two buttons with different scaling factors
+					QPushButton *button1 = msgBox.addButton(tr("Scaling Factor from DXF:\n%1 (%2 to Meters)\nSize: %3 x %4 m")
+															.arg(m_dxfScalingFactor)
+															.arg(QString::fromStdString(m_dxfScalingUnit))
+															.arg(boundingDxf.m_x)
+															.arg(boundingDxf.m_y), QMessageBox::AcceptRole);
+					QPushButton *button2 = msgBox.addButton(tr("Scaling Factor auto-determinded:\n%1 (%2 to Meters)\nSize: %3 x %4 m")
+															.arg(scalingFactor[SU_Auto])
+															.arg(QString::fromStdString(foundUnit))
+															.arg(boundingAuto.m_x)
+															.arg(boundingAuto.m_y), QMessageBox::AcceptRole);
+
+					msgBox.setFixedWidth(1500);
+					// Show the message box and wait for user input
+					msgBox.exec();
+
+					// Determine which button was clicked
+					if (msgBox.clickedButton() == button1) {
+						m_drawing.m_scalingFactor = m_dxfScalingFactor; // Scaling factor for inches to meters
+					} else if (msgBox.clickedButton() == button2) {
+						m_drawing.m_scalingFactor = scalingFactor[SU_Auto]; // Scaling factor for feet to meters
+					}
+				}
+			}
+			else
+				log += QString("Could not find auto scaling unit. Taking: %1 m\n").arg(scalingFactor[SU_Auto]);
+
 		}
 		log += QString("Current dimensions - X: %1 Y: %2 Z: %3\n").arg(scalingFactor[su] * bounding.m_x)
 				   .arg(scalingFactor[su] * bounding.m_y)
@@ -206,8 +266,18 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		log += QString("---------------------------------------------------------\n");
 		log += QString("\nPLEASE MIND: Currently are no hatchings supported.\n");
 
+		// if (su != SU_Auto)
+
+		// if (su == SU_Auto) {
+		// 	log += QString("Found auto scaling factor: %1 m from unit %2\n")
+		// 			.arg(m_drawing.m_scalingFactor)
+		// 			.arg(QString::fromStdString(m_drawing.m_scalingUnit));
+		// }
+		// else
+		// 	log += QString("Could not find auto scaling unit. Taking: %1 m\n").arg(scalingFactor[SU_Auto]);
+
 		m_drawing.m_scalingFactor = scalingFactor[su];
-		m_drawing.m_origin *= scalingFactor[su];
+		m_drawing.m_origin *= m_drawing.m_scalingFactor;
 
 	} catch (IBK::Exception &ex) {
 		log += "Error in converting DXF-File. See Error below\n";
@@ -218,6 +288,8 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 
 	m_ui->progressBar->setFormat("Finished %p%");
 	m_ui->progressBar->setValue(4);
+
+	QMessageBox::information(this, tr("DXF-Import"), tr("DXF import successful. If the scaling factor is not set correctly, you can adjust it by double-clicking the DXF node in the left navigation tree."));
 }
 
 
@@ -266,7 +338,7 @@ void ImportDXFDialog::updateImportButtonEnabledState() {
 
 
 bool ImportDXFDialog::readDxfFile(Drawing &drawing, const QString &fname) {
-	DRW_InterfaceImpl drwIntImpl(&drawing, m_nextId);
+	DRW_InterfaceImpl drwIntImpl(&drawing, &m_dxfScalingFactor, &m_dxfScalingUnit, m_nextId);
 //	dxfRW dxf(fname.toStdString().c_str());
 	dxfRW dxf(fname.toStdString());
 
@@ -307,6 +379,7 @@ void drawingBoundingBox(const Drawing &d,
 						const std::vector<t> &drawingObjects,
 						IBKMK::Vector3D &upperValues,
 						IBKMK::Vector3D &lowerValues,
+						const double &scalingFactor = 1.0,
 						const IBKMK::Vector3D &offset = IBKMK::Vector3D(0,0,0),
 						const IBKMK::Vector3D &xAxis = IBKMK::Vector3D(1,0,0),
 						const IBKMK::Vector3D &yAxis = IBKMK::Vector3D(0,1,0),
@@ -325,7 +398,10 @@ void drawingBoundingBox(const Drawing &d,
 		if (!dl->m_visible)
 			continue;
 
-		const std::vector<IBKMK::Vector3D> &points = d.points3D(drawObj.points2D(), drawObj.m_zPosition, drawObj.m_trans);
+		if (dl->m_displayName == "0")
+			continue; // Skipping historic layer 0 for better bounding box results
+
+		const std::vector<IBKMK::Vector3D> &points = d.points3D(drawObj.points2D(), drawObj.m_zPosition, drawObj.m_trans, scalingFactor);
 
 		for (const IBKMK::Vector3D &v : points) {
 
@@ -347,7 +423,7 @@ void drawingBoundingBox(const Drawing &d,
 }
 
 
-IBKMK::Vector3D ImportDXFDialog::boundingBox(const Drawing *drawing, IBKMK::Vector3D & center, bool transformPoints) {
+IBKMK::Vector3D ImportDXFDialog::boundingBox(const Drawing *drawing, IBKMK::Vector3D & center, bool transformPoints, const double scalingFactor = 1.0) {
 
 	IBKMK::Vector3D lowerValues(std::numeric_limits<double>::max(),
 								std::numeric_limits<double>::max(),
@@ -356,15 +432,15 @@ IBKMK::Vector3D ImportDXFDialog::boundingBox(const Drawing *drawing, IBKMK::Vect
 								std::numeric_limits<double>::lowest(),
 								std::numeric_limits<double>::lowest());
 
-	drawingBoundingBox<Drawing::Arc>(*drawing, drawing->m_arcs, upperValues, lowerValues);
-	drawingBoundingBox<Drawing::Circle>(*drawing, drawing->m_circles, upperValues, lowerValues);
-	drawingBoundingBox<Drawing::Ellipse>(*drawing, drawing->m_ellipses, upperValues, lowerValues);
-	drawingBoundingBox<Drawing::Line>(*drawing, drawing->m_lines, upperValues, lowerValues);
-	drawingBoundingBox<Drawing::PolyLine>(*drawing, drawing->m_polylines, upperValues, lowerValues);
-	drawingBoundingBox<Drawing::Point>(*drawing, drawing->m_points, upperValues, lowerValues);
-	drawingBoundingBox<Drawing::Solid>(*drawing, drawing->m_solids, upperValues, lowerValues);
-	drawingBoundingBox<Drawing::Text>(*drawing, drawing->m_texts, upperValues, lowerValues);
-	drawingBoundingBox<Drawing::LinearDimension>(*drawing, drawing->m_linearDimensions, upperValues, lowerValues);
+	drawingBoundingBox<Drawing::Arc>(*drawing, drawing->m_arcs, upperValues, lowerValues, scalingFactor);
+	drawingBoundingBox<Drawing::Circle>(*drawing, drawing->m_circles, upperValues, lowerValues, scalingFactor);
+	drawingBoundingBox<Drawing::Ellipse>(*drawing, drawing->m_ellipses, upperValues, lowerValues, scalingFactor);
+	drawingBoundingBox<Drawing::Line>(*drawing, drawing->m_lines, upperValues, lowerValues, scalingFactor);
+	drawingBoundingBox<Drawing::PolyLine>(*drawing, drawing->m_polylines, upperValues, lowerValues, scalingFactor);
+	drawingBoundingBox<Drawing::Point>(*drawing, drawing->m_points, upperValues, lowerValues, scalingFactor);
+	drawingBoundingBox<Drawing::Solid>(*drawing, drawing->m_solids, upperValues, lowerValues, scalingFactor);
+	drawingBoundingBox<Drawing::Text>(*drawing, drawing->m_texts, upperValues, lowerValues, scalingFactor);
+	drawingBoundingBox<Drawing::LinearDimension>(*drawing, drawing->m_linearDimensions, upperValues, lowerValues, scalingFactor);
 
 	// center point of bounding box
 	center = 0.5*(lowerValues+upperValues);
@@ -378,13 +454,59 @@ void ImportDXFDialog::on_comboBoxUnit_activated(int index) {
 }
 
 
-DRW_InterfaceImpl::DRW_InterfaceImpl(Drawing *drawing, unsigned int &nextId) :
+DRW_InterfaceImpl::DRW_InterfaceImpl(Drawing *drawing, double *dxfScalingFactor,
+									 std::string *dxfScalingUnit, unsigned int &nextId) :
 	m_drawing(drawing),
-	m_nextId(&nextId)
+	m_nextId(&nextId),
+	m_dxfScalingFactor(dxfScalingFactor),
+	m_dxfScalingUnit(dxfScalingUnit)
 {}
 
+// Function to get the unit name and scaling factor relative to meters from INSUNITS value
+std::pair<std::string, double> getUnitInfo(int insunits) {
+	// INSUNITS value to units mapping
+	std::map<int, std::pair<std::string, double>> unitsMapping = {
+		{0, {"Unitless", 1.0}},
+		{1, {"Inches", 0.0254}},
+		{2, {"Feet", 0.3048}},
+		{3, {"Miles", 1609.34}},
+		{4, {"Millimeters", 0.001}},
+		{5, {"Centimeters", 0.01}},
+		{6, {"Meters", 1.0}},
+		{7, {"Kilometers", 1000.0}},
+		{8, {"Microinches", 0.0000000254}},
+		{9, {"Mils", 0.0000254}},
+		{10, {"Yards", 0.9144}},
+		{11, {"Angstroms", 0.0000000001}},
+		{12, {"Nanometers", 0.000000001}},
+		{13, {"Microns", 0.000001}},
+		{14, {"Decimeters", 0.1}},
+		{15, {"Decameters", 10.0}},
+		{16, {"Hectometers", 100.0}},
+		{17, {"Gigameters", 1000000000.0}},
+		{18, {"Astronomical units", 149597870700.0}},
+		{19, {"Light years", 9.4607e15}},
+		{20, {"Parsecs", 3.0857e16}}
+	};
 
-void DRW_InterfaceImpl::addHeader(const DRW_Header* /*data*/){}
+	// Find the unit in the map
+	auto it = unitsMapping.find(insunits);
+	if (it != unitsMapping.end()) {
+		return it->second;
+	} else {
+		return {"Unknown", 1.0};
+	}
+}
+
+void DRW_InterfaceImpl::addHeader(const DRW_Header* data){
+	DRW_Variant *var = data->vars.at("$INSUNITS");
+	int unitCode = var->content.i;
+
+	std::pair<std::string, double> scalingFactor = getUnitInfo(unitCode);
+	*m_dxfScalingFactor = scalingFactor.second;
+	*m_dxfScalingUnit = scalingFactor.first;
+}
+
 void DRW_InterfaceImpl::addLType(const DRW_LType& /*data*/){}
 void DRW_InterfaceImpl::addLayer(const DRW_Layer& data){
 
