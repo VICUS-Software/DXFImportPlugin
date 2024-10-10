@@ -16,7 +16,7 @@ const unsigned int SEGMENT_COUNT_CIRCLE		= 30;
 const unsigned int SEGMENT_COUNT_ELLIPSE	= 30;
 
 // Multiplyer for different layers and their heights
-const double Z_MULTIPLYER					= 0.00005;
+const double Z_MULTIPLYER					= 0.00000;
 // default line width
 const double DEFAULT_LINE_WEIGHT			= 0.05;
 // multiplier to apply to width of entities

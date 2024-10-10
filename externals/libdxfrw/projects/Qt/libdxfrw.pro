@@ -66,5 +66,3 @@ SOURCES += \
 
 QMAKE_CXXFLAGS += -Wall
 
-TARGET = dxflib
-

@@ -5,8 +5,7 @@
 
 TARGET = DXFImportPlugin
 
-QT += gui
-greaterThan(QT_MAJOR_VERSION, 4):  QT += widgets
+QT += gui widgets
 
 TEMPLATE = lib
 CONFIG += plugin
