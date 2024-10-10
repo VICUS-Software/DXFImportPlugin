@@ -14,9 +14,6 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/../../../libdxfrw/src/intern
 	
 	${Qt5Widgets_INCLUDE_DIRS}
-	${Qt5PrintSupport_INCLUDE_DIRS}
-	${Qt5Network_INCLUDE_DIRS}
-	${Qt5Svg_INCLUDE_DIRS}
 )
 
 # collect a list of all source files of the DXFImportPlugin library
@@ -32,13 +29,12 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj ")
 endif()
 
-add_definitions(-DIFCQUERY_AS_DYNAMIC_LIBRARY)
-add_definitions(-DIFCQUERY_LIB)
-
 # run uic and moc compilers
 qt5_add_resources( LIB_RC_SRCS ${LIB_QRCS} )
 qt5_wrap_ui( LIB_UI_SRCS ${LIB_UIS} )
 qt5_wrap_cpp( LIB_MOC_SRCS ${LIB_HDRS} )
+
+option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
 # build the library
 add_library( DXFImportPlugin SHARED
@@ -48,4 +44,5 @@ add_library( DXFImportPlugin SHARED
 	${LIB_UI_SRCS}
 	${LIB_RC_SRCS}
 )
+
 
