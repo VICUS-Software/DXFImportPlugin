@@ -51,6 +51,7 @@ target_link_libraries(DXFImportPlugin
     ${CMAKE_CURRENT_BINARY_DIR}/../IBKMK/libIBKMK.a
     ${CMAKE_CURRENT_BINARY_DIR}/../TiCPP/libTiCPP.a
     ${CMAKE_CURRENT_BINARY_DIR}/../libdxfrw/liblibdxfrw.a
+    ${CMAKE_CURRENT_BINARY_DIR}/../QtExt/libQtExt.a
 )
 
 # Ensure position-independent code (PIC) is enabled for the static libraries
