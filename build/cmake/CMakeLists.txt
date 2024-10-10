@@ -1,10 +1,10 @@
 # CMakeLists.txt file for DXFImportPlugin and dependent libraries
 
-# The project name
-project( DXFImportPlugin )
-
 # Require a fairly recent cmake version
 cmake_minimum_required( VERSION 2.8...3.10 )
+
+# The project name
+project( DXFImportPlugin )
 
 # enable @rpath on MacOS
 cmake_policy(SET CMP0042 NEW)
@@ -82,6 +82,23 @@ endif (MSVC)
 # automatically add CMAKE_CURRENT_SOURCE_DIR and CMAKE_CURRENT_BINARY_DIR to the include directories in every processed CMakeLists.txt
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+if (DISABLE_QT)
+	message("*** Building without Qt5 ***")
+else (DISABLE_QT)
+	find_package(Qt5Widgets REQUIRED)
+	find_package(Qt5Xml REQUIRED)
+	find_package(Qt5Svg REQUIRED)
+	find_package(Qt5PrintSupport REQUIRED)
+	find_package(Qt5Network REQUIRED)
+	find_package(Qt5Concurrent REQUIRED)
+
+	message("*** Building with Qt5, Version ${Qt5Widgets_VERSION} ***")
+	
+	# we need OpenGL
+	find_package( OpenGL REQUIRED )
+
+endif (DISABLE_QT)
+
 if( APPLE )
 	find_library(IOKIT NAMES IOKit REQUIRED)
 	find_library(COREFOUNDATION NAMES CoreFoundation REQUIRED)
@@ -109,13 +126,16 @@ include( ../../externals/IBK/projects/cmake_local/cmake_pri/CMakeLists.txt  )
 add_subdirectory( ../../externals/IBK/projects/cmake_local IBK )
 add_subdirectory( ../../externals/IBKMK/projects/cmake_local IBKMK )
 add_subdirectory( ../../externals/libdxfrw/projects/cmake_local libdxfrw )
-add_subdirectory( ../../externals/QtExt/projects/cmake_local QtExt )
 add_subdirectory( ../../externals/TiCPP/projects/cmake_local TiCPP )
+
+if (NOT DISABLE_QT)
+	message("*** Building Qt-based libs ***")	
+	add_subdirectory( ../../externals/QtExt/projects/cmake_local QtExt )
+	add_subdirectory( ../../externals/DXFImportPlugin/projects/cmake_local DXFImportPlugin )
+endif()
 
 
 # -------------------------------------------------------------
 # applications
 # -------------------------------------------------------------
-
-add_subdirectory( ../../IFC2BESTest/projects/cmake_local IFC2BESTest)
 

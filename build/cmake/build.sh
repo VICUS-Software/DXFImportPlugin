@@ -78,17 +78,18 @@ fi
 cd $BUILDDIR && cmake $CMAKE_OPTIONS $CMAKE_BUILD_TYPE $CMAKE_COMPILER_OPTIONS $CMAKELISTSDIR && make -j$MAKE_CPUCOUNT &&
 cd $CMAKELISTSDIR &&
 mkdir -p ../../bin/release &&
-echo "*** Copying NandradSolver and IFC2BESTest to bin/release ***" &&
-if [ -d $BUILDDIR/IFC2BESTest/IFC2BESTest.app ]
+echo "*** Copying DXFImportPlugin to bin/release ***" &&
+if [ -d $BUILDDIR/DXFImportPlugin/libDXFImportPlugin.so ]
 then
+	echo 'blub'
 	# MacOS
-	rm -rf ../../bin/release/IFC2BESTest.app
-	cp -r $BUILDDIR/IFC2BESTest/IFC2BESTest.app ../../bin/release/IFC2BESTest.app &&
+	rm -rf ../../bin/release/libDXFImportPlugin.so
+	cp -r $BUILDDIR/DXFImportPlugin/libDXFImportPlugin.so ../../bin/release/libDXFImportPlugin.so &&
     echo "All files copied successfully."
 else
-	if [ -e $BUILDDIR/IFC2BESTest/IFC2BESTest ]
+	if [ -e $BUILDDIR/DXFImportPlugin/libDXFImportPlugin.so ]
 	then
-		cp $BUILDDIR/IFC2BESTest/IFC2BESTest ../../bin/release/IFC2BESTest
+		cp $BUILDDIR/DXFImportPlugin/libDXFImportPlugin.so ../../bin/release/libDXFImportPlugin.so
 	fi
 fi
 
