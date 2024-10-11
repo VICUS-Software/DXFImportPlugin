@@ -56,7 +56,7 @@ if (UNIX)
 		${CMAKE_CURRENT_BINARY_DIR}/../QtExt/libQtExt.a
 	)
 	# Ensure position-independent code (PIC) is enabled for the static libraries
-set_target_properties(DXFImportPlugin PROPERTIES POSITION_INDEPENDENT_CODE ON)
+	set_target_properties(DXFImportPlugin PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif (UNIX)
 
 
