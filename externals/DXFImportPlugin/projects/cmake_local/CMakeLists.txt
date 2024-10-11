@@ -45,14 +45,17 @@ add_library( DXFImportPlugin SHARED
 	${LIB_RC_SRCS}
 )
 
-# Specify the static libraries to link with
-target_link_libraries(DXFImportPlugin
-    ${CMAKE_CURRENT_BINARY_DIR}/../IBK/libIBK.a
-    ${CMAKE_CURRENT_BINARY_DIR}/../IBKMK/libIBKMK.a
-    ${CMAKE_CURRENT_BINARY_DIR}/../TiCPP/libTiCPP.a
-    ${CMAKE_CURRENT_BINARY_DIR}/../libdxfrw/liblibdxfrw.a
-    ${CMAKE_CURRENT_BINARY_DIR}/../QtExt/libQtExt.a
-)
+if (UNIX)
+	# Specify the static libraries to link with
+	target_link_libraries(DXFImportPlugin
+		${CMAKE_CURRENT_BINARY_DIR}/../IBK/libIBK.a
+		${CMAKE_CURRENT_BINARY_DIR}/../IBKMK/libIBKMK.a
+		${CMAKE_CURRENT_BINARY_DIR}/../TiCPP/libTiCPP.a
+		${CMAKE_CURRENT_BINARY_DIR}/../libdxfrw/liblibdxfrw.a
+		${CMAKE_CURRENT_BINARY_DIR}/../QtExt/libQtExt.a
+	)
+endif (UNIX)
+
 
 # Ensure position-independent code (PIC) is enabled for the static libraries
 set_target_properties(DXFImportPlugin PROPERTIES POSITION_INDEPENDENT_CODE ON)
