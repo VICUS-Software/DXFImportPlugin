@@ -37,16 +37,12 @@ if ERRORLEVEL 1 GOTO fail
 popd
 
 :: copy executable to bin/release dir
-xcopy /Y .\bb_VC_x64\IFC2BESTest\IFC2BESTest.exe ..\..\bin\release_x64
-xcopy /Y .\bb_VC_x64\ifcplusplus\ifcplusplus.dll ..\..\bin\release_x64
-
-pause
+xcopy /Y .\bb_VC_x64\DxfImportPlugin\DxfImportPlugin.dll ..\..\bin\release_x64
 
 exit /b 0
 
 
 :fail
-pause
 echo ** Build Failed **
 exit /b 1
 
