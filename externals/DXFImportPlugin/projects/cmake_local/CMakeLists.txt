@@ -35,7 +35,7 @@ qt5_wrap_ui( LIB_UI_SRCS ${LIB_UIS} )
 qt5_wrap_cpp( LIB_MOC_SRCS ${LIB_HDRS} )
 
 # build the library
-add_library( DXFImportPlugin SHARED
+add_library( DXFImportPlugin STATIC
 	${LIB_SRCS}
 	${LIB_HDRS}
 	${LIB_MOC_SRCS}
