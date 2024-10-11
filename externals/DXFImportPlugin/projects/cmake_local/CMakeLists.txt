@@ -41,7 +41,7 @@ else()
 endif()
 
 # build the library
-add_library( DXFImportPlugin STATIC
+add_library( DXFImportPlugin SHARED
 	${LIB_SRCS}
 	${LIB_HDRS}
 	${LIB_MOC_SRCS}
