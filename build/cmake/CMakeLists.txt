@@ -6,8 +6,6 @@ cmake_minimum_required( VERSION 2.8...3.10 )
 # The project name
 project( DXFImportPlugin )
 
-add_compile_options(-std=c++17)
-
 # enable @rpath on MacOS
 cmake_policy(SET CMP0042 NEW)
 
