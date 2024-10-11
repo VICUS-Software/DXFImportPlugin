@@ -20,7 +20,6 @@ goto check_permissions
 	   mklink /d %~dp0\%%a %~dp0..\SIM-VICUS\externals\%%a
 	))
 
-pause
 exit /b 1
 
 @echo off
@@ -35,7 +34,6 @@ goto check_Permissions
 		goto create_symlinks
     ) else (
         echo Keine Adminrechte gefunden. Bitte erneut mit Adminrechten ausfÅhren.
-		pause 
 		exit /b 1
     )
     
