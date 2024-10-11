@@ -21,8 +21,10 @@ jobs:
     steps:
     - name: install jom
       run: choco install jom -y
-    - name: install innosetup
-      run: choco install innosetup -y
+    - name: Install Visual Studio Build Tools
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        toolset: 16  # Visual Studio 2019 corresponds to version 16
     - name: install qt5
       uses: jurplel/install-qt-action@v4.0.0
       with:
@@ -50,11 +52,9 @@ jobs:
     - name: build
       working-directory: build/cmake/
       shell: cmd
-      run: build_VC_x64.bat --nightly --silent
+      run: build_VC_x64.bat release
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v4
       with:
         name: SIM-VICUS_win64
         path: bin\release_x64\*.dll
-        # 5 * 40 Mb = 200 Mb storage space needed
-        retention-days: 5
