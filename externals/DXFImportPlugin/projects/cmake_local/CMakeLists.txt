@@ -49,21 +49,19 @@ add_library( DXFImportPlugin SHARED
 	${LIB_RC_SRCS}
 )
 
-if (UNIX)
-	# Lib links all dependent libraries under linux statically
+# Lib links all dependent libraries under linux statically
+option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
-	option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
-	# Specify the static libraries to link with
-	target_link_libraries(DXFImportPlugin
-		${CMAKE_CURRENT_BINARY_DIR}/../IBK/libIBK.${TYPE}
-		${CMAKE_CURRENT_BINARY_DIR}/../IBKMK/libIBKMK.${TYPE}
-		${CMAKE_CURRENT_BINARY_DIR}/../TiCPP/libTiCPP.${TYPE}
-		${CMAKE_CURRENT_BINARY_DIR}/../libdxfrw/liblibdxfrw.${TYPE}
-		${CMAKE_CURRENT_BINARY_DIR}/../QtExt/libQtExt.${TYPE}
-	)
-	# Ensure position-independent code (PIC) is enabled for the static libraries
-	set_target_properties(DXFImportPlugin PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif (UNIX)
+# Specify the static libraries to link with
+target_link_libraries(DXFImportPlugin
+	${CMAKE_CURRENT_BINARY_DIR}/../IBK/libIBK.${TYPE}
+	${CMAKE_CURRENT_BINARY_DIR}/../IBKMK/libIBKMK.${TYPE}
+	${CMAKE_CURRENT_BINARY_DIR}/../TiCPP/libTiCPP.${TYPE}
+	${CMAKE_CURRENT_BINARY_DIR}/../libdxfrw/liblibdxfrw.${TYPE}
+	${CMAKE_CURRENT_BINARY_DIR}/../QtExt/libQtExt.${TYPE}
+)
+# Ensure position-independent code (PIC) is enabled for the static libraries
+set_target_properties(DXFImportPlugin PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 
 
