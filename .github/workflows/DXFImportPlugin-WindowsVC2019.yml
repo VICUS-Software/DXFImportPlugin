@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
   # run whenever someone pushes data
   # WARNING: this may give excessive build times which need to be paid!
-#  push:
-#    branches: [ "master" ]
-#  pull_request:
-#    branches: [ "master" ]
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
