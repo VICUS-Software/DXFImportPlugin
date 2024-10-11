@@ -14,7 +14,7 @@ do
   then
 	echo "Der zu linkende Ordner $source_folder/$folder existiert nicht"
   # Prüfen, ob der Ordner bereits existiert
-  else if [ -L "$target_folder/$folder" ]
+  elif [ -L "$target_folder/$folder" ]
   then
     read -p "Der Symlink für den Ordner $folder existiert bereits. Möchten Sie den Ordner löschen und einen neuen Symlink erstellen? (j/n)" choice
     case "$choice" in
