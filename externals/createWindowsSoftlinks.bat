@@ -20,7 +20,7 @@ goto check_permissions
 	   mklink /d %~dp0\%%a %~dp0..\SIM-VICUS\externals\%%a
 	))
 
-exit /b 1
+exit /b 0
 
 @echo off
 goto check_Permissions
