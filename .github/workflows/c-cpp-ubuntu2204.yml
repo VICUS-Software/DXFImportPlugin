@@ -30,6 +30,10 @@ jobs:
     - name: build
       working-directory: build/cmake
       run: ./build.sh release
+    - name: Print files
+      run: tree /f ${{github.workspace}}
+      working-directory: build/cmake
+      shell: cmd
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
