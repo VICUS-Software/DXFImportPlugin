@@ -34,8 +34,6 @@ qt5_add_resources( LIB_RC_SRCS ${LIB_QRCS} )
 qt5_wrap_ui( LIB_UI_SRCS ${LIB_UIS} )
 qt5_wrap_cpp( LIB_MOC_SRCS ${LIB_HDRS} )
 
-option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
-
 # build the library
 add_library( DXFImportPlugin SHARED
 	${LIB_SRCS}
@@ -46,6 +44,9 @@ add_library( DXFImportPlugin SHARED
 )
 
 if (UNIX)
+	# Lib links all dependent libraries under linux statically
+
+	option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 	# Specify the static libraries to link with
 	target_link_libraries(DXFImportPlugin
 		${CMAKE_CURRENT_BINARY_DIR}/../IBK/libIBK.a
@@ -54,9 +55,10 @@ if (UNIX)
 		${CMAKE_CURRENT_BINARY_DIR}/../libdxfrw/liblibdxfrw.a
 		${CMAKE_CURRENT_BINARY_DIR}/../QtExt/libQtExt.a
 	)
+	# Ensure position-independent code (PIC) is enabled for the static libraries
+set_target_properties(DXFImportPlugin PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif (UNIX)
 
 
-# Ensure position-independent code (PIC) is enabled for the static libraries
-set_target_properties(DXFImportPlugin PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 
