@@ -46,24 +46,13 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
 # Create a list for the libraries
 set(LIBRARIES_TO_LINK "")
-
-if (UNIX)
-    list(APPEND LIBRARIES_TO_LINK
-        ${CMAKE_CURRENT_BINARY_DIR}/../IBK/libIBK.a
-        ${CMAKE_CURRENT_BINARY_DIR}/../IBKMK/libIBKMK.a
-        ${CMAKE_CURRENT_BINARY_DIR}/../TiCPP/libTiCPP.a
-        ${CMAKE_CURRENT_BINARY_DIR}/../libdxfrw/liblibdxfrw.a
-        ${CMAKE_CURRENT_BINARY_DIR}/../QtExt/libQtExt.a
-    )
-else()
-    list(APPEND LIBRARIES_TO_LINK
-        ${CMAKE_CURRENT_BINARY_DIR}/../IBK/IBK.lib
-        ${CMAKE_CURRENT_BINARY_DIR}/../IBKMK/IBKMK.lib
-        ${CMAKE_CURRENT_BINARY_DIR}/../TiCPP/TiCPP.lib
-        ${CMAKE_CURRENT_BINARY_DIR}/../libdxfrw/libdxfrw.lib
-        ${CMAKE_CURRENT_BINARY_DIR}/../QtExt/QtExt.lib
-    )
-endif()
+list(APPEND LIBRARIES_TO_LINK
+		IBK
+		IBKMK
+		TiCPP
+		libdxfrw
+		QtExt
+)
 
 # Specify the static libraries to link with
 target_link_libraries(DXFImportPlugin ${LIBRARIES_TO_LINK})
