@@ -52,6 +52,7 @@ list(APPEND LIBRARIES_TO_LINK
 		TiCPP
 		libdxfrw
 		QtExt
+		${QT_LIBRARIES}
 )
 
 # Specify the static libraries to link with
