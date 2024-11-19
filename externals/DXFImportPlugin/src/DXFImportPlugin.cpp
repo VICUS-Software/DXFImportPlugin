@@ -11,17 +11,14 @@
 #include <QtExt_Directories.h>
 #include <QtExt_LanguageHandler.h>
 
-
-#include <iostream>
-#include <fstream>
+#include <IBK_MessageHandlerRegistry.h>
 
 
 const std::string VERSION = "1.0";
 
-DXFImportPlugin::DXFImportPlugin(QObject *parent)
-{
-}
-
+DXFImportPlugin::DXFImportPlugin(QObject *parent) :
+	QObject(parent)
+{}
 
 bool DXFImportPlugin::import(QWidget * parent, QString& projectText) {
 
@@ -151,6 +148,12 @@ void DXFImportPlugin::setLanguage(QString langId, QString appname) {
 	// *** Create log file directory and setup message handler ***
 	QDir baseDir;
 	baseDir.mkpath(QtExt::Directories::userDataDir());
+
+	IBK::MessageHandlerRegistry::instance().setMessageHandler( &m_messageHandler );
+	std::string errmsg;
+	std::string logfile = QtExt::Directories::userDataDir().toStdString();
+	logfile += "/DXFImportPlugin.log";
+	m_messageHandler.openLogFile(logfile, false, errmsg);
 
 	// reset the appname here, so that the correct translation file can be found
 	QtExt::Directories::appname = "DXFImportPlugin";

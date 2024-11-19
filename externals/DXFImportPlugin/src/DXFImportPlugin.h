@@ -3,6 +3,8 @@
 
 #include <SVImportPluginInterface.h>
 
+#include <IBK_MessageHandler.h>
+
 #define DXFImportPlugin_iid "de.dresden-tu.arch.ibk.DXFImportPlugin/1.0"
 
 class DXFImportPlugin : public QObject, public SVImportPluginInterface
@@ -21,6 +23,7 @@ public:
 
 private:
 	QString					m_dxfFileName;
+	IBK::MessageHandler		m_messageHandler;
 };
 
 #endif // DXFImportPlugin_H
