@@ -53,12 +53,8 @@ jobs:
       working-directory: build/cmake/
       shell: cmd
       run: build_VC_x64.bat release
-    - name: Print files
-      run: tree /f ${{github.workspace}}
-      working-directory: build/cmake
-      shell: cmd
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v4
       with:
-        name: SIM-VICUS_win64
+        name: DXFImportPlugin_win64
         path: bin\release_x64\*.dll
