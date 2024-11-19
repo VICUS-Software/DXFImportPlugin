@@ -44,6 +44,16 @@ add_library(DXFImportPlugin SHARED
 # Option to build using shared libraries (if needed)
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
+# generate list of all required QT_LIBRARIES
+set ( QT_LIBRARIES 
+	Qt5::Widgets
+	Qt5::PrintSupport
+	Qt5::Svg
+	Qt5::Xml
+	Qt5::Network
+	Qt5::Concurrent
+)
+
 # Create a list for the libraries
 set(LIBRARIES_TO_LINK "")
 list(APPEND LIBRARIES_TO_LINK
