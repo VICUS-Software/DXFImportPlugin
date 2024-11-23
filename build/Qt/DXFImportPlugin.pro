@@ -22,5 +22,5 @@ libdxfrw.file = ../../externals/libdxfrw/projects/Qt/libdxfrw.pro
 
 IBKMK.depends = IBK
 QtExt.depends = IBK
-DXFTestBed.depends = DXFImportPlugin IBK IBKMK TiCPP QtExt libdxfrw
 DXFImportPlugin.depends = IBK IBKMK TiCPP QtExt libdxfrw
+DXFTestBed.depends = IBK IBKMK TiCPP QtExt libdxfrw DXFImportPlugin

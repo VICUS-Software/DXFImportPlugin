@@ -871,14 +871,14 @@ void DRW_InterfaceImpl::addInsert(const DRW_Insert& data){
 
 void DRW_InterfaceImpl::addTrace(const DRW_Trace& /*data*/){}
 void DRW_InterfaceImpl::add3dFace(const DRW_3Dface& data){
-	auto printPoint = [](const DRW_Coord &coord, const QString &text) {
-		qDebug() << QString("%4 | Point X %1 Y %2 Z %3").arg(coord.x, coord.y, coord.z).arg(text);
-	};
+	// auto printPoint = [](const DRW_Coord &coord, const QString &text) {
+	// 	qDebug() << QString("%4 | Point X %1 Y %2 Z %3").arg(coord.x, coord.y, coord.z).arg(text);
+	// };
 
-	printPoint(data.basePoint, "p0");
-	printPoint(data.secPoint, "p1");
-	printPoint(data.thirdPoint, "p2");
-	printPoint(data.fourPoint, "p3");
+	// printPoint(data.basePoint, "p0");
+	// printPoint(data.secPoint, "p1");
+	// printPoint(data.thirdPoint, "p2");
+	// printPoint(data.fourPoint, "p3");
 }
 
 
