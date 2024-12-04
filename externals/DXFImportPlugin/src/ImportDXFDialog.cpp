@@ -93,6 +93,7 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 void ImportDXFDialog::on_pushButtonConvert_clicked() {
 	FUNCID(ImportDXFDialog::on_pushButtonConvert_clicked);
 
+	setEnabled(false);
 	m_ui->progressBar->setEnabled(true);
 	m_ui->progressBar->setRange(0,4);
 	m_ui->progressBar->setFormat("Reading file %p%");
@@ -280,8 +281,19 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		m_drawing.m_origin *= m_drawing.m_scalingFactor;
 
 	} catch (IBK::Exception &ex) {
+
 		log += "Error in converting DXF-File. See Error below\n";
-		log += ex.what();
+		log += QString::fromStdString(ex.msgStack());
+
+		QMessageBox messageBox(this);
+		messageBox.setIcon(QMessageBox::Critical);
+		messageBox.setText(tr("Could not import DXF file."));
+		std::string msg = ex.msgStack();
+		messageBox.setDetailedText(QString("%1").arg(QString::fromStdString(msg)));
+		messageBox.exec();
+
+		setEnabled(true);
+		return;
 	}
 
 	m_ui->plainTextEditLogWindow->setPlainText(log);
@@ -499,7 +511,13 @@ std::pair<std::string, double> getUnitInfo(int insunits) {
 }
 
 void DRW_InterfaceImpl::addHeader(const DRW_Header* data){
+	if (data->vars.find("$INSUNITS") == data->vars.end())
+		return;
+
 	DRW_Variant *var = data->vars.at("$INSUNITS");
+	if (var == nullptr)
+		return;
+
 	int unitCode = var->content.i;
 
 	std::pair<std::string, double> scalingFactor = getUnitInfo(unitCode);
