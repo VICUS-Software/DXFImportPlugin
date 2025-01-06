@@ -232,27 +232,28 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 					IBKMK::Vector3D boundingAuto = boundingBox(&m_drawing, dummy, false, scalingFactor[SU_Auto]);
 
 					// Add two buttons with different scaling factors
-					QPushButton *button1 = msgBox.addButton(tr("Scaling Factor from DXF:\n%1 (%2 to Meters)\nWidht: %3 m\nHeight: %4 m")
-															.arg(m_dxfScalingFactor)
-															.arg(QString::fromStdString(m_dxfScalingUnit))
-															.arg(boundingDxf.m_x, 0, 'f', 2)
-															.arg(boundingDxf.m_y, 0, 'f', 2), QMessageBox::AcceptRole);
-					QPushButton *button2 = msgBox.addButton(tr("Scaling Factor auto-determinded:\n%1 (%2 to Meters)\nWidht: %3 m\nHeight: %4 m")
+					QPushButton *button2 = msgBox.addButton(tr("Auto-determinded:\n%1 (%2 to Meters)\nWidht: %3 m\nHeight: %4 m")
 															.arg(scalingFactor[SU_Auto])
 															.arg(QString::fromStdString(foundUnit))
 															.arg(boundingAuto.m_x, 0, 'f', 2)
 															.arg(boundingAuto.m_y, 0, 'f', 2), QMessageBox::AcceptRole);
+					QPushButton *button1 = msgBox.addButton(tr("DXF:\n%1 (%2 to Meters)\nWidht: %3 m\nHeight: %4 m")
+															.arg(m_dxfScalingFactor)
+															.arg(QString::fromStdString(m_dxfScalingUnit))
+															.arg(boundingDxf.m_x, 0, 'f', 2)
+															.arg(boundingDxf.m_y, 0, 'f', 2), QMessageBox::AcceptRole);
 
 					msgBox.setFixedWidth(1500);
 					// Show the message box and wait for user input
 					msgBox.exec();
 
 					// Determine which button was clicked
-					if (msgBox.clickedButton() == button1) {
-						m_drawing.m_scalingFactor = m_dxfScalingFactor; // Scaling factor for inches to meters
-					} else if (msgBox.clickedButton() == button2) {
-						m_drawing.m_scalingFactor = scalingFactor[SU_Auto]; // Scaling factor for feet to meters
-					}
+					if (msgBox.clickedButton() == button1)
+						m_drawing.m_scalingFactor = m_dxfScalingFactor;
+					else if (msgBox.clickedButton() == button2)
+						m_drawing.m_scalingFactor = scalingFactor[SU_Auto];
+
+					qDebug() << "Current scaling factor is: " << m_drawing.m_scalingFactor;
 				}
 			}
 			else
@@ -270,17 +271,6 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		log += QString("---------------------------------------------------------\n");
 		log += QString("\nPLEASE MIND: Currently are no hatchings supported.\n");
 
-		// if (su != SU_Auto)
-
-		// if (su == SU_Auto) {
-		// 	log += QString("Found auto scaling factor: %1 m from unit %2\n")
-		// 			.arg(m_drawing.m_scalingFactor)
-		// 			.arg(QString::fromStdString(m_drawing.m_scalingUnit));
-		// }
-		// else
-		// 	log += QString("Could not find auto scaling unit. Taking: %1 m\n").arg(scalingFactor[SU_Auto]);
-
-		m_drawing.m_scalingFactor = scalingFactor[su];
 		m_drawing.m_offset *= m_drawing.m_scalingFactor;
 
 	} catch (IBK::Exception &ex) {

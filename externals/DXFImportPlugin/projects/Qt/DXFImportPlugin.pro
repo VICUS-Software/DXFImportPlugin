@@ -111,7 +111,7 @@ win32-msvc* {
 # !isEmpty(target.path): INSTALLS += target
 
 
-TRANSLATIONS += ../../resources/translations/DXFImportPlugin_de.ts
+TRANSLATIONS +=
 CODECFORSRC = UTF-8
 
 FORMS += \
