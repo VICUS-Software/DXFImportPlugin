@@ -9,6 +9,10 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/../../../IBKMK/src
 	${PROJECT_SOURCE_DIR}/../../../QtExt/src
 	${PROJECT_SOURCE_DIR}/../../../TiCPP/src
+	${PROJECT_SOURCE_DIR}/../../../glm/src
+	${PROJECT_SOURCE_DIR}/../../../glm/src/glm 
+	${PROJECT_SOURCE_DIR}/../../../glm/src/gtx
+	${PROJECT_SOURCE_DIR}/../../../TiCPP/src
 	${PROJECT_SOURCE_DIR}/../../../libdxfrw/src
 	${PROJECT_SOURCE_DIR}/../../../libdxfrw/src/intern
 	${Qt5Widgets_INCLUDE_DIRS}
@@ -62,6 +66,7 @@ list(APPEND LIBRARIES_TO_LINK
 		TiCPP
 		libdxfrw
 		QtExt
+		glm
 		${QT_LIBRARIES}
 )
 

@@ -58,6 +58,7 @@ LIBS += \
 -lTiCPP \
 -lIBKMK \
 -lIBK \
+-lglm \
 -lDXFImportPlugin
 
 INCLUDEPATH = \
@@ -68,6 +69,9 @@ INCLUDEPATH = \
 ../../../externals/IBK/src \
 ../../../externals/libdxfrw/src \
 ../../../externals/libdxfrw/src/intern \
+../../../externals/glm/src \
+../../../externals/glm/src\glm \
+../../../externals/glm/src\gtx \
 ../../../externals/QtExt/src
 
 

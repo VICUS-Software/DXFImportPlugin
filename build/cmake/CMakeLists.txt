@@ -127,13 +127,14 @@ add_subdirectory( ../../externals/IBKMK/projects/cmake_local IBKMK )
 add_subdirectory( ../../externals/libdxfrw/projects/cmake_local libdxfrw )
 add_subdirectory( ../../externals/TiCPP/projects/cmake_local TiCPP )
 add_subdirectory( ../../externals/IBK/projects/cmake_local IBK )
+add_subdirectory( ../../externals/glm/projects/cmake_local glm )
 
 if (NOT DISABLE_QT)
 	message("*** Building Qt-based libs ***")	
 	add_subdirectory( ../../externals/QtExt/projects/cmake_local QtExt )
 	add_subdirectory( ../../externals/DXFImportPlugin/projects/cmake_local DXFImportPlugin )
 
-    add_dependencies( DXFImportPlugin IBK IBKMK QtExt libdxfrw TiCPP )
+    add_dependencies( DXFImportPlugin IBK IBKMK QtExt libdxfrw TiCPP glm )
 
 endif()
 

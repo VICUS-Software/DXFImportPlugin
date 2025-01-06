@@ -74,7 +74,7 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 	if (m_ui->checkBoxMove->isChecked()) {
 		// set custom origin ?
 		if (m_ui->checkBoxCustomOrigin->isChecked())
-			m_drawing.m_origin = IBKMK::Vector3D(m_ui->lineEditCustomCenterX->value(),
+			m_drawing.m_offset = IBKMK::Vector3D(m_ui->lineEditCustomCenterX->value(),
 												 m_ui->lineEditCustomCenterY->value(),
 												 0);
 		// move to origin
@@ -176,8 +176,10 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		// m_drawing.compensateCoordinates();
 
 		// calculate center
-		IBKMK::Vector3D center = m_drawing.weightedCenterMedian(m_nextId);
-		m_drawing.m_origin = -1.0 * center;
+		if (m_drawing.m_offset == IBKMK::Vector3D()) {
+			IBKMK::Vector3D center = m_drawing.weightedCenterMedian(m_nextId);
+			m_drawing.m_offset = -1.0 * center;
+		}
 
 		// Drawing should be at least bigger than 150 m
 		double AUTO_SCALING_MIN_THRESHOLD =	  800;
@@ -230,16 +232,16 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 					IBKMK::Vector3D boundingAuto = boundingBox(&m_drawing, dummy, false, scalingFactor[SU_Auto]);
 
 					// Add two buttons with different scaling factors
-					QPushButton *button1 = msgBox.addButton(tr("Scaling Factor from DXF:\n%1 (%2 to Meters)\nSize: %3 x %4 m")
+					QPushButton *button1 = msgBox.addButton(tr("Scaling Factor from DXF:\n%1 (%2 to Meters)\nWidht: %3 m\nHeight: %4 m")
 															.arg(m_dxfScalingFactor)
 															.arg(QString::fromStdString(m_dxfScalingUnit))
-															.arg(boundingDxf.m_x)
-															.arg(boundingDxf.m_y), QMessageBox::AcceptRole);
-					QPushButton *button2 = msgBox.addButton(tr("Scaling Factor auto-determinded:\n%1 (%2 to Meters)\nSize: %3 x %4 m")
+															.arg(boundingDxf.m_x, 0, 'f', 2)
+															.arg(boundingDxf.m_y, 0, 'f', 2), QMessageBox::AcceptRole);
+					QPushButton *button2 = msgBox.addButton(tr("Scaling Factor auto-determinded:\n%1 (%2 to Meters)\nWidht: %3 m\nHeight: %4 m")
 															.arg(scalingFactor[SU_Auto])
 															.arg(QString::fromStdString(foundUnit))
-															.arg(boundingAuto.m_x)
-															.arg(boundingAuto.m_y), QMessageBox::AcceptRole);
+															.arg(boundingAuto.m_x, 0, 'f', 2)
+															.arg(boundingAuto.m_y, 0, 'f', 2), QMessageBox::AcceptRole);
 
 					msgBox.setFixedWidth(1500);
 					// Show the message box and wait for user input
@@ -261,9 +263,10 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 				   .arg(scalingFactor[su] * bounding.m_y)
 				   .arg(scalingFactor[su] * bounding.m_z);
 
-		log += QString("Current center - X: %1 Y: %2 Z: %3\n").arg(scalingFactor[su] * center.m_x)
-				   .arg(scalingFactor[su] * center.m_y)
-				   .arg(scalingFactor[su] * center.m_z);
+		log += QString("Current center - X: %1 Y: %2 Z: %3\n")
+				.arg(scalingFactor[su] * m_drawing.m_offset.m_x,
+					 scalingFactor[su] * m_drawing.m_offset.m_y,
+					 scalingFactor[su] * m_drawing.m_offset.m_z);
 		log += QString("---------------------------------------------------------\n");
 		log += QString("\nPLEASE MIND: Currently are no hatchings supported.\n");
 
@@ -278,7 +281,7 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		// 	log += QString("Could not find auto scaling unit. Taking: %1 m\n").arg(scalingFactor[SU_Auto]);
 
 		m_drawing.m_scalingFactor = scalingFactor[su];
-		m_drawing.m_origin *= m_drawing.m_scalingFactor;
+		m_drawing.m_offset *= m_drawing.m_scalingFactor;
 
 	} catch (IBK::Exception &ex) {
 
@@ -391,7 +394,6 @@ void drawingBoundingBox(const Drawing &d,
 						const std::vector<t> &drawingObjects,
 						IBKMK::Vector3D &upperValues,
 						IBKMK::Vector3D &lowerValues,
-						const double &scalingFactor = 1.0,
 						const IBKMK::Vector3D &offset = IBKMK::Vector3D(0,0,0),
 						const IBKMK::Vector3D &xAxis = IBKMK::Vector3D(1,0,0),
 						const IBKMK::Vector3D &yAxis = IBKMK::Vector3D(0,1,0),
@@ -403,7 +405,7 @@ void drawingBoundingBox(const Drawing &d,
 
 	// process all drawings
 	for (const t &drawObj : drawingObjects) {
-		const DrawingLayer *dl = dynamic_cast<const DrawingLayer *>(drawObj.m_parentLayer);
+		const DrawingLayer *dl = dynamic_cast<const DrawingLayer *>(drawObj.m_layerRef);
 
 		Q_ASSERT(dl != nullptr);
 
@@ -413,7 +415,7 @@ void drawingBoundingBox(const Drawing &d,
 		if (dl->m_displayName == "0")
 			continue; // Skipping historic layer 0 for better bounding box results
 
-		const std::vector<IBKMK::Vector3D> &points = d.points3D(drawObj.points2D(), drawObj.m_zPosition, drawObj.m_trans, scalingFactor);
+		const std::vector<IBKMK::Vector3D> &points = d.points3D(drawObj.points2D(), drawObj);
 
 		for (const IBKMK::Vector3D &v : points) {
 
@@ -444,20 +446,20 @@ IBKMK::Vector3D ImportDXFDialog::boundingBox(const Drawing *drawing, IBKMK::Vect
 								std::numeric_limits<double>::lowest(),
 								std::numeric_limits<double>::lowest());
 
-	drawingBoundingBox<Drawing::Arc>(*drawing, drawing->m_arcs, upperValues, lowerValues, scalingFactor);
-	drawingBoundingBox<Drawing::Circle>(*drawing, drawing->m_circles, upperValues, lowerValues, scalingFactor);
-	drawingBoundingBox<Drawing::Ellipse>(*drawing, drawing->m_ellipses, upperValues, lowerValues, scalingFactor);
-	drawingBoundingBox<Drawing::Line>(*drawing, drawing->m_lines, upperValues, lowerValues, scalingFactor);
-	drawingBoundingBox<Drawing::PolyLine>(*drawing, drawing->m_polylines, upperValues, lowerValues, scalingFactor);
-	drawingBoundingBox<Drawing::Point>(*drawing, drawing->m_points, upperValues, lowerValues, scalingFactor);
-	drawingBoundingBox<Drawing::Solid>(*drawing, drawing->m_solids, upperValues, lowerValues, scalingFactor);
-	drawingBoundingBox<Drawing::Text>(*drawing, drawing->m_texts, upperValues, lowerValues, scalingFactor);
-	drawingBoundingBox<Drawing::LinearDimension>(*drawing, drawing->m_linearDimensions, upperValues, lowerValues, scalingFactor);
+	drawingBoundingBox<Drawing::Arc>(*drawing, drawing->m_arcs, upperValues, lowerValues);
+	drawingBoundingBox<Drawing::Circle>(*drawing, drawing->m_circles, upperValues, lowerValues);
+	drawingBoundingBox<Drawing::Ellipse>(*drawing, drawing->m_ellipses, upperValues, lowerValues);
+	drawingBoundingBox<Drawing::Line>(*drawing, drawing->m_lines, upperValues, lowerValues);
+	drawingBoundingBox<Drawing::PolyLine>(*drawing, drawing->m_polylines, upperValues, lowerValues);
+	drawingBoundingBox<Drawing::Point>(*drawing, drawing->m_points, upperValues, lowerValues);
+	drawingBoundingBox<Drawing::Solid>(*drawing, drawing->m_solids, upperValues, lowerValues);
+	drawingBoundingBox<Drawing::Text>(*drawing, drawing->m_texts, upperValues, lowerValues);
+	drawingBoundingBox<Drawing::LinearDimension>(*drawing, drawing->m_linearDimensions, upperValues, lowerValues);
 
 	// center point of bounding box
-	center = 0.5*(lowerValues+upperValues);
+	center = 0.5 * scalingFactor * (lowerValues+upperValues);
 	// difference between upper and lower values gives bounding box (dimensions of selected geometry)
-	return (upperValues-lowerValues);
+	return scalingFactor * (upperValues-lowerValues);
 }
 
 
@@ -586,7 +588,11 @@ void DRW_InterfaceImpl::addDimStyle(const DRW_Dimstyle& data) {
 }
 
 
-void DRW_InterfaceImpl::addVport(const DRW_Vport& /*data*/){}
+void DRW_InterfaceImpl::addVport(const DRW_Vport& data){
+	m_drawing->m_offset.m_x = -1.0 * data.center.x;
+	m_drawing->m_offset.m_y = -1.0 * data.center.y;
+	m_drawing->m_offset.m_z = -1.0 * data.center.z;
+}
 void DRW_InterfaceImpl::addTextStyle(const DRW_Textstyle& /*data*/){}
 void DRW_InterfaceImpl::addAppId(const DRW_AppId& /*data*/){}
 void DRW_InterfaceImpl::addBlock(const DRW_Block& data){
@@ -870,7 +876,6 @@ void DRW_InterfaceImpl::addInsert(const DRW_Insert& data){
 
 	Drawing::Insert newInsert;
 	newInsert.m_currentBlockName = QString::fromStdString(data.name);
-	newInsert.m_id = (*m_nextId)++;
 
 	newInsert.m_angle = data.angle;
 
@@ -1116,7 +1121,12 @@ void DRW_InterfaceImpl::addDimAngular3P(const DRW_DimAngular3p */*data*/){}
 void DRW_InterfaceImpl::addDimOrdinate(const DRW_DimOrdinate */*data*/){}
 void DRW_InterfaceImpl::addLeader(const DRW_Leader */*data*/){}
 void DRW_InterfaceImpl::addHatch(const DRW_Hatch */*data*/){}
-void DRW_InterfaceImpl::addViewport(const DRW_Viewport& /*data*/){}
+
+void DRW_InterfaceImpl::addViewport(const DRW_Viewport& data) {
+	m_drawing->m_offset.m_x = -1.0 * data.centerPX;
+	m_drawing->m_offset.m_y = -1.0 * data.centerPY;
+}
+
 void DRW_InterfaceImpl::addImage(const DRW_Image */*data*/){}
 void DRW_InterfaceImpl::linkImage(const DRW_ImageDef */*data*/){}
 void DRW_InterfaceImpl::addComment(const char* /*comment*/){}

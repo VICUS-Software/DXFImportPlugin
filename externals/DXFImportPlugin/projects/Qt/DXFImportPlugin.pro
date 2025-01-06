@@ -31,6 +31,9 @@ INCLUDEPATH = \
 	../../../../externals/IBK/src \
 	../../../../externals/IBKMK/src \
 	../../../../externals/QtExt/src \
+	../../../../externals/glm/src \
+	../../../../externals/glm/src\glm \
+	../../../../externals/glm/src\gtx \
 	../../../../externals/TiCPP/src
 
 CONFIG(debug, debug|release) {
@@ -91,6 +94,7 @@ LIBS += \
 	-lIBKMK \
 	-llibdxfrw \
 	-lQtExt \
+	-lglm \
 	-lIBK
 
 win32:LIBS += -liphlpapi
