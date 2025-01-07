@@ -1604,6 +1604,9 @@ IBKMK::Vector3D Drawing::weightedCenterMedian(unsigned int nextId) {
 
 	addPoints(m_lines, this, xValues, yValues, cnt);
 	addPoints(m_polylines, this, xValues, yValues, cnt);
+	addPoints(m_points, this, xValues, yValues, cnt);
+	addPoints(m_arcs, this, xValues, yValues, cnt);
+	addPoints(m_circles, this, xValues, yValues, cnt);
 
 	std::nth_element(xValues.begin(), xValues.begin() + xValues.size() / 2, xValues.end());
 	std::nth_element(yValues.begin(), yValues.begin() + yValues.size() / 2, yValues.end());
@@ -2387,7 +2390,8 @@ TiXmlElement * Drawing::writeXML(TiXmlElement * parent) const {
 		e->SetAttribute("displayName", m_displayName.toStdString());
 	if (m_visible != Drawing().m_visible)
 		e->SetAttribute("visible", IBK::val2string<bool>(m_visible));
-	TiXmlElement::appendSingleAttributeElement(e, "Origin", nullptr, std::string(), m_offset.toString(PRECISION));
+	qDebug() << "Point: " << QString::fromStdString(m_offset.toString(16));
+	TiXmlElement::appendSingleAttributeElement(e, "Origin", nullptr, std::string(), m_offset.toString(8));
 	m_rotationMatrix.writeXML(e);
 	TiXmlElement::appendSingleAttributeElement(e, "ScalingFactor", nullptr, std::string(), IBK::val2string<double>(m_scalingFactor));
 	TiXmlElement::appendSingleAttributeElement(e, "LineWeightScaling", nullptr, std::string(), IBK::val2string<double>(m_lineWeightScaling));

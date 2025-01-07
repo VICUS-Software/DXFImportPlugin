@@ -232,18 +232,18 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 					IBKMK::Vector3D boundingAuto = boundingBox(&m_drawing, dummy, false, scalingFactor[SU_Auto]);
 
 					// Add two buttons with different scaling factors
-					QPushButton *button2 = msgBox.addButton(tr("Auto-determinded:\n%1 (%2 to Meters)\nWidht: %3 m\nHeight: %4 m")
+					QPushButton *button2 = msgBox.addButton(tr("Auto-determinded: %1\n(%2 to Meters)\nWidht: %3 m\nHeight: %4 m")
 															.arg(scalingFactor[SU_Auto])
 															.arg(QString::fromStdString(foundUnit))
 															.arg(boundingAuto.m_x, 0, 'f', 2)
 															.arg(boundingAuto.m_y, 0, 'f', 2), QMessageBox::AcceptRole);
-					QPushButton *button1 = msgBox.addButton(tr("DXF:\n%1 (%2 to Meters)\nWidht: %3 m\nHeight: %4 m")
+					QPushButton *button1 = msgBox.addButton(tr("DXF: %1\n(%2 to Meters)\nWidht: %3 m\nHeight: %4 m")
 															.arg(m_dxfScalingFactor)
 															.arg(QString::fromStdString(m_dxfScalingUnit))
 															.arg(boundingDxf.m_x, 0, 'f', 2)
 															.arg(boundingDxf.m_y, 0, 'f', 2), QMessageBox::AcceptRole);
 
-					msgBox.setFixedWidth(1500);
+					// msgBox.setFixedWidth(1500);
 					// Show the message box and wait for user input
 					msgBox.exec();
 
@@ -579,10 +579,12 @@ void DRW_InterfaceImpl::addDimStyle(const DRW_Dimstyle& data) {
 
 
 void DRW_InterfaceImpl::addVport(const DRW_Vport& data){
-	m_drawing->m_offset.m_x = -1.0 * data.center.x;
-	m_drawing->m_offset.m_y = -1.0 * data.center.y;
-	m_drawing->m_offset.m_z = -1.0 * data.center.z;
+	m_drawing->m_offset.m_x = (double)-1.0 * data.center.x;
+	m_drawing->m_offset.m_y = (double)-1.0 * data.center.y;
+	m_drawing->m_offset.m_z = (double)-1.0 * data.center.z;
 }
+
+
 void DRW_InterfaceImpl::addTextStyle(const DRW_Textstyle& /*data*/){}
 void DRW_InterfaceImpl::addAppId(const DRW_AppId& /*data*/){}
 void DRW_InterfaceImpl::addBlock(const DRW_Block& data){
@@ -1112,10 +1114,7 @@ void DRW_InterfaceImpl::addDimOrdinate(const DRW_DimOrdinate */*data*/){}
 void DRW_InterfaceImpl::addLeader(const DRW_Leader */*data*/){}
 void DRW_InterfaceImpl::addHatch(const DRW_Hatch */*data*/){}
 
-void DRW_InterfaceImpl::addViewport(const DRW_Viewport& data) {
-	m_drawing->m_offset.m_x = -1.0 * data.centerPX;
-	m_drawing->m_offset.m_y = -1.0 * data.centerPY;
-}
+void DRW_InterfaceImpl::addViewport(const DRW_Viewport& /*data*/) {}
 
 void DRW_InterfaceImpl::addImage(const DRW_Image */*data*/){}
 void DRW_InterfaceImpl::linkImage(const DRW_ImageDef */*data*/){}

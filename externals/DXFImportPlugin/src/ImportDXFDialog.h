@@ -251,7 +251,7 @@ public :
 	void addHatch(const DRW_Hatch *data) override;
 
 	/** Called for every viewport entity. */
-	void addViewport(const DRW_Viewport& data) override;
+	void addViewport(const DRW_Viewport&) override;
 
 	/** Called for every image entity. */
 	void addImage(const DRW_Image *data) override;
