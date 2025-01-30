@@ -3,6 +3,7 @@
 
 #include <QMessageBox>
 #include <QFileInfo>
+#include <QTimer>
 
 #include <regex>
 
@@ -129,9 +130,6 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 			m_drawing.m_texts.clear();
 			m_drawing.m_linearDimensions.clear();
 		}
-
-		if (m_detailedMode)
-			m_ui->pushButtonImport->setEnabled(success);
 
 		if (!success)
 			throw IBK::Exception(IBK::FormatString("Import of DXF-File was not successful!"), FUNC_ID);
@@ -295,6 +293,11 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 	m_ui->progressBar->setValue(4);
 
 	QMessageBox::information(this, tr("DXF-Import"), tr("DXF import successful. If the scaling factor is not set correctly, you can adjust it by double-clicking the DXF node in the left navigation tree."));
+
+	if (m_detailedMode)
+		QTimer::singleShot(300, [this, success]() {
+			m_ui->pushButtonImport->setEnabled(success);
+		});
 }
 
 
