@@ -69,6 +69,8 @@ private slots:
 
 	void on_checkBoxShowDetails_stateChanged(int arg1);
 
+	void on_checkBoxCustomOrigin_toggled(bool checked);
+
 private:
 	/*! Read a specified dxf file.
 		\param drawing VICUS Drawing, where all primitives are added

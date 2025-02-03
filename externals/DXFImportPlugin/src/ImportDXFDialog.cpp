@@ -41,6 +41,8 @@ ImportDXFDialog::ImportDXFDialog(QWidget *parent) :
 	m_ui->progressBar->update();
 	m_ui->progressBar->setEnabled(false);
 
+	m_ui->checkBoxCustomOrigin->setChecked(false);
+
 	m_ui->lineEditCustomCenterX->setup(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max(),
 									   tr("Custom center x coordinate"));
 	m_ui->lineEditCustomCenterY->setup(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max(),
@@ -292,12 +294,12 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 	m_ui->progressBar->setFormat("Finished %p%");
 	m_ui->progressBar->setValue(4);
 
-	QMessageBox::information(this, tr("DXF-Import"), tr("DXF import successful. If the scaling factor is not set correctly, you can adjust it by double-clicking the DXF node in the left navigation tree."));
-
-	if (m_detailedMode)
-		QTimer::singleShot(300, [this, success]() {
-			m_ui->pushButtonImport->setEnabled(success);
-		});
+	m_ui->pushButtonImport->setEnabled(success);
+	QMessageBox::information(this, tr("DXF-Import"), tr("DXF import successful. If the scaling factor is not set correctly, "
+														"you can adjust it by double-clicking the DXF node in the left navigation tree."));
+	setEnabled(true);
+	setEnabled(true);
+	setEnabled(true);
 }
 
 
@@ -1150,5 +1152,11 @@ void ImportDXFDialog::on_checkBoxShowDetails_stateChanged(int arg1) {
 	QSize preferredSize = sizeHint();
 	preferredSize.setWidth(width()); // Maintain the current width
 	setFixedSize(preferredSize);
+}
+
+
+void ImportDXFDialog::on_checkBoxCustomOrigin_toggled(bool checked) {
+	m_ui->lineEditCustomCenterX->setEnabled(checked);
+	m_ui->lineEditCustomCenterY->setEnabled(checked);
 }
 
