@@ -16,7 +16,7 @@ on:
 jobs:
   build:
 
-    runs-on: windows-2021
+    runs-on: windows-latest
 
     steps:
     - name: install jom
