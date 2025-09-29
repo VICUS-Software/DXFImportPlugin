@@ -22,9 +22,10 @@ jobs:
     - name: install jom
       run: choco install jom -y
     - name: Install Visual Studio Build Tools
-      uses: ilammy/msvc-dev-cmd@v1
+      uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
-        toolset: 16  # Visual Studio 2019 corresponds to version 16
+        arch: x64
+        toolset: 14.29  # Visual Studio 2019
     - name: install qt5
       uses: jurplel/install-qt-action@v4.0.0
       with:
