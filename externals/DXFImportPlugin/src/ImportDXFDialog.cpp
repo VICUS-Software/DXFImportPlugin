@@ -288,6 +288,9 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 		messageBox.exec();
 
 		setEnabled(true);
+		bool lineEditsEnabled = m_ui->checkBoxCustomOrigin->isChecked();
+		m_ui->lineEditCustomCenterX->setEnabled(lineEditsEnabled);
+		m_ui->lineEditCustomCenterY->setEnabled(lineEditsEnabled);
 		return;
 	}
 
