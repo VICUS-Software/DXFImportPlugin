@@ -300,8 +300,9 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 	QMessageBox::information(this, tr("DXF-Import"), tr("DXF import successful. If the scaling factor is not set correctly, "
 														"you can adjust it by double-clicking the DXF node in the left navigation tree."));
 	setEnabled(true);
-	setEnabled(true);
-	setEnabled(true);
+	bool lineEditsEnabled = m_ui->checkBoxCustomOrigin->isChecked();
+	m_ui->lineEditCustomCenterX->setEnabled(lineEditsEnabled);
+	m_ui->lineEditCustomCenterY->setEnabled(lineEditsEnabled);
 }
 
 
