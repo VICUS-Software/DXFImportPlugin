@@ -258,8 +258,10 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 			}
 			else
 				log += QString("Could not find auto scaling unit. Taking: %1 m\n").arg(scalingFactor[SU_Auto]);
-
 		}
+		else
+			m_drawing.m_scalingFactor = scalingFactor[su];
+
 		log += QString("Current dimensions - X: %1 Y: %2 Z: %3\n").arg(scalingFactor[su] * bounding.m_x)
 				   .arg(scalingFactor[su] * bounding.m_y)
 				   .arg(scalingFactor[su] * bounding.m_z);
