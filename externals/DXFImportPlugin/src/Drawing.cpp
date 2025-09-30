@@ -1341,15 +1341,33 @@ Drawing::Block *Drawing::findBlockPointer(const QString &name, const std::map<QS
 		return it->second;
 }
 
+
+const DrawingLayer* Drawing::findLayerReference(const std::map<QString, const DrawingLayer*> &layerRefs, const QString &layerName)  {
+	try {
+		return layerRefs.at(layerName);
+	}
+	catch (std::exception &ex) {
+		throw IBK::Exception(ex, IBK::FormatString("Could not find layer '%1'"), "[Drawing::findLayerReference]");
+	}
+}
+
+
 void Drawing::updatePointer(){
 	FUNCID(Drawing::updatePointer);
 	m_objectPtr.clear();
+
+	if (m_drawingLayers.empty()) {
+		m_drawingLayers.push_back(DrawingLayer());
+		m_drawingLayers.back().m_id = 100000;
+		m_drawingLayers.back().m_displayName = "0";
+	}
 
 	// map layer name to reference, this avoids nested loops
 	std::map<QString, const DrawingLayer*> layerRefs;
 	for (const DrawingLayer &dl: m_drawingLayers) {
 		layerRefs[dl.m_displayName] = &dl;
 	}
+
 
 	// map block name to reference, also avoids nested loops
 	std::map<QString, Block*> blockRefs;
@@ -1364,49 +1382,49 @@ void Drawing::updatePointer(){
 	try {
 
 		for (unsigned int i=0; i < m_points.size(); ++i){
-			m_points[i].m_layerRef = layerRefs.at(m_points[i].m_layerName);
+			m_points[i].m_layerRef = findLayerReference(layerRefs, m_points[i].m_layerName);
 			m_points[i].m_block = findBlockPointer(m_points[i].m_blockName, blockRefs);
 			m_points[i].m_parent = this;
 			m_objectPtr[m_points[i].m_id] = &m_points[i];
 		}
 		for (unsigned int i=0; i < m_lines.size(); ++i){
-			m_lines[i].m_layerRef = layerRefs.at(m_lines[i].m_layerName);
+			m_lines[i].m_layerRef = findLayerReference(layerRefs, m_lines[i].m_layerName);
 			m_lines[i].m_block = findBlockPointer(m_lines[i].m_blockName, blockRefs);
 			m_lines[i].m_parent = this;
 			m_objectPtr[m_lines[i].m_id] = &m_lines[i];
 		}
 		for (unsigned int i=0; i < m_polylines.size(); ++i){
-			m_polylines[i].m_layerRef = layerRefs.at(m_polylines[i].m_layerName);
+			m_polylines[i].m_layerRef = findLayerReference(layerRefs, m_polylines[i].m_layerName);
 			m_polylines[i].m_block = findBlockPointer(m_polylines[i].m_blockName, blockRefs);
 			m_polylines[i].m_parent = this;
 			m_objectPtr[m_polylines[i].m_id] = &m_polylines[i];
 		}
 		for (unsigned int i=0; i < m_circles.size(); ++i){
-			m_circles[i].m_layerRef = layerRefs.at(m_circles[i].m_layerName);
+			m_circles[i].m_layerRef = findLayerReference(layerRefs, m_circles[i].m_layerName);
 			m_circles[i].m_block = findBlockPointer(m_circles[i].m_blockName, blockRefs);
 			m_circles[i].m_parent = this;
 			m_objectPtr[m_circles[i].m_id] = &m_circles[i];
 		}
 		for (unsigned int i=0; i < m_arcs.size(); ++i){
-			m_arcs[i].m_layerRef = layerRefs.at(m_arcs[i].m_layerName);
+			m_arcs[i].m_layerRef = findLayerReference(layerRefs, m_arcs[i].m_layerName);
 			m_arcs[i].m_block = findBlockPointer(m_arcs[i].m_blockName, blockRefs);
 			m_arcs[i].m_parent = this;
 			m_objectPtr[m_arcs[i].m_id] = &m_arcs[i];
 		}
 		for (unsigned int i=0; i < m_ellipses.size(); ++i){
-			m_ellipses[i].m_layerRef = layerRefs.at(m_ellipses[i].m_layerName);
+			m_ellipses[i].m_layerRef = findLayerReference(layerRefs, m_ellipses[i].m_layerName);
 			m_ellipses[i].m_block = findBlockPointer(m_ellipses[i].m_blockName, blockRefs);
 			m_ellipses[i].m_parent = this;
 			m_objectPtr[m_ellipses[i].m_id] = &m_ellipses[i];
 		}
 		for (unsigned int i=0; i < m_solids.size(); ++i){
-			m_solids[i].m_layerRef = layerRefs.at(m_solids[i].m_layerName);
+			m_solids[i].m_layerRef = findLayerReference(layerRefs, m_solids[i].m_layerName);
 			m_solids[i].m_block = findBlockPointer(m_solids[i].m_blockName, blockRefs);
 			m_solids[i].m_parent = this;
 			m_objectPtr[m_solids[i].m_id] = &m_solids[i];
 		}
 		for (unsigned int i=0; i < m_texts.size(); ++i){
-			m_texts[i].m_layerRef = layerRefs.at(m_texts[i].m_layerName);
+			m_texts[i].m_layerRef = findLayerReference(layerRefs, m_texts[i].m_layerName);
 			m_texts[i].m_block = findBlockPointer(m_texts[i].m_blockName, blockRefs);
 			m_texts[i].m_parent = this;
 			m_objectPtr[m_texts[i].m_id] = &m_texts[i];
@@ -1419,7 +1437,7 @@ void Drawing::updatePointer(){
 			m_inserts[i].m_parentBlock = findBlockPointer(m_inserts[i].m_parentBlockName, blockRefs);
 		}
 		for (unsigned int i=0; i < m_linearDimensions.size(); ++i){
-			m_linearDimensions[i].m_layerRef = layerRefs.at(m_linearDimensions[i].m_layerName);
+			m_linearDimensions[i].m_layerRef = findLayerReference(layerRefs, m_linearDimensions[i].m_layerName);
 			m_linearDimensions[i].m_parent = this;
 			m_texts[i].m_block = findBlockPointer(m_linearDimensions[i].m_blockName, blockRefs);
 			m_objectPtr[m_linearDimensions[i].m_id] = &m_linearDimensions[i];

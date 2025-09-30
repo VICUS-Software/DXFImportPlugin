@@ -730,10 +730,13 @@ private:
 	void generateLinesFromText(const std::string &text, double textHeight, Qt::Alignment alignment, const double &rotationAngle,
 							   const IBKMK::Vector2D &basePoint, const AbstractDrawingObject &object, std::vector<LineSegment> &lineGeometries) const;
 
+	/*! Find layer reference. */
+	const DrawingLayer *findLayerReference(const std::map<QString, const DrawingLayer*> &layerRefs, const QString &layerName);
+
 	/*! Cached unique-ID -> object ptr map. Greatly speeds up objectByID() and any other lookup functions.
 		This map is updated in updatePointers().
 	*/
-	std::map<unsigned int, Drawing::AbstractDrawingObject*>					m_objectPtr;
+	std::map<unsigned int, Drawing::AbstractDrawingObject*>							m_objectPtr;
 
 	/*! Cached pick points of drawing.
 		\param Key is ID of drawing object, to get better referencing in picking.
