@@ -14,7 +14,7 @@
 #include <IBK_MessageHandlerRegistry.h>
 
 
-const std::string VERSION = "1.0";
+const std::string VERSION = "1.1";
 
 DXFImportPlugin::DXFImportPlugin(QObject *parent) :
 	QObject(parent)
@@ -90,7 +90,7 @@ bool DXFImportPlugin::import(QWidget * parent, QString& projectText) {
 	if (res == ImportDXFDialog::AddDrawings) {
 
 		TiXmlDocument doc;
-		TiXmlDeclaration * decl = new TiXmlDeclaration( "1.0", "UTF-8", "" );
+		TiXmlDeclaration * decl = new TiXmlDeclaration( "1.1", "UTF-8", "" );
 		doc.LinkEndChild( decl );
 
 		TiXmlElement * root = new TiXmlElement( "VicusProject" );

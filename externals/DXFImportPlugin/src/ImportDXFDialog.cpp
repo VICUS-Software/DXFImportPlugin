@@ -84,7 +84,7 @@ ImportDXFDialog::ImportResults ImportDXFDialog::importFile(const QString &fname)
 		// m_drawing.moveToOrigin();
 	}
 
-//	if (m_ui->checkBoxFixFonts->isChecked())
+	//	if (m_ui->checkBoxFixFonts->isChecked())
 	fixFonts();
 
 	m_ui->plainTextEditLogWindow->clear();
@@ -263,8 +263,8 @@ void ImportDXFDialog::on_pushButtonConvert_clicked() {
 			m_drawing.m_scalingFactor = scalingFactor[su];
 
 		log += QString("Current dimensions - X: %1 Y: %2 Z: %3\n").arg(scalingFactor[su] * bounding.m_x)
-				   .arg(scalingFactor[su] * bounding.m_y)
-				   .arg(scalingFactor[su] * bounding.m_z);
+				.arg(scalingFactor[su] * bounding.m_y)
+				.arg(scalingFactor[su] * bounding.m_z);
 
 		log += QString("Current center - X: %1 Y: %2 Z: %3\n")
 				.arg(scalingFactor[su] * m_drawing.m_offset.m_x,
@@ -355,7 +355,7 @@ void ImportDXFDialog::updateImportButtonEnabledState() {
 
 bool ImportDXFDialog::readDxfFile(Drawing &drawing, const QString &fname) {
 	DRW_InterfaceImpl drwIntImpl(&drawing, &m_dxfScalingFactor, &m_dxfScalingUnit, m_nextId);
-//	dxfRW dxf(fname.toStdString().c_str());
+	//	dxfRW dxf(fname.toStdString().c_str());
 	dxfRW dxf(fname.toStdString());
 
 	bool success = dxf.read(&drwIntImpl, false);
@@ -560,8 +560,8 @@ void DRW_InterfaceImpl::addLayer(const DRW_Layer& data){
 	/* value 256 means use defaultColor, value 7 is black */
 	if (data.color != 256 && data.color != 7)
 		newLayer.m_color = QColor(DRW::dxfColors[data.color][0], DRW::dxfColors[data.color][1], DRW::dxfColors[data.color][2]);
-//	else
-//		newLayer.m_color = SVStyle::instance().m_defaultDrawingColor;
+	//	else
+	//		newLayer.m_color = SVStyle::instance().m_defaultDrawingColor;
 
 	// Push new layer into vector<Layer*> m_layer
 	m_drawing->m_drawingLayers.push_back(newLayer);
@@ -941,23 +941,121 @@ void DRW_InterfaceImpl::addSolid(const DRW_Solid& data){
 
 }
 
+
 std::string replaceFormatting(const std::string &str) {
 	std::string replaced = str;
+
 	try {
-		replaced = std::regex_replace(replaced, std::regex("\\\\\\\\"), "\032");
-		replaced = std::regex_replace(replaced, std::regex("\\\\P|\\n|\\t"), " ");
-		replaced = std::regex_replace(replaced, std::regex("\\\\(\\\\[ACcFfHLlOopQTW])|\\\\[ACcFfHLlOopQTW][^\\\\;]*;|\\\\[ACcFfHLlOopQTW]"), "$1");
-		replaced = std::regex_replace(replaced, std::regex("([^\\\\])\\\\S([^;]*)[/#\\^]([^;]*);"), "$1$2/$3");
-		replaced = std::regex_replace(replaced, std::regex("\\\\(\\\\S)|[\\\\](})|}"), "$1$2");
-		replaced = std::regex_replace(replaced, std::regex("\\{/?"), "");
+		// 0) Protect literal backslashes "\\" -> placeholder (ASCII 26)
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"(\\\\)"),
+					std::string(1, '\x1A')
+					);
+
+		// 1) Replace DXF paragraph breaks and real newlines/tabs with a space
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"(\\P|\n|\t)"),
+					" "
+					);
+
+		// 2) Drop \pt...; positioning codes (present in your DXF)
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"(\\pt[^;]*;)"),
+					""
+					);
+
+		// 3) TRUE stacked fractions: \Snum/den; or \Snum#den; or \Snum^den;
+		//    -> "num/den"
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"(\\S([^/#\^;]+)[/#\^]([^;]+);)"),
+					"$1/$2"
+					);
+
+		// 4) Superscripts: map \S1^  ;, \S2^  ;, \S3^  ; to Unicode ¹²³
+		//    (used e.g. for "m²" in your DXF)
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"(\\S1\^ *;)"),
+					"\xC2\xB9"   // ¹
+					);
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"(\\S2\^ *;)"),
+					"\xC2\xB2"   // ²
+					);
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"(\\S3\^ *;)"),
+					"\xC2\xB3"   // ³
+					);
+
+		// 5) Remove any remaining \S...; (baseline shifts etc.)
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"(\\S[^;]*;)"),
+					""
+					);
+
+		// 6) Remove stray slash after superscript (e.g. "m²/")
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"((\xC2\xB9|\xC2\xB2|\xC2\xB3)/)"),
+					"$1"
+					);
+
+		// 7) Strip inline formatting codes like \A, \C, \F, \H, \L, \O, \Q, \T, \W
+		//    with or without argument blocks: \C1;  \H0.7x;  \L  etc.
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"(\\[ACcFfHLlOopQTW](?:[^\\;]*;)?)"),
+					""
+					);
+
+		// 8) Remove MTEXT grouping braces { ... }, including "{/"
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"(\{/?|\})"),
+					""
+					);
+
+		// 9) Restore literal backslashes from placeholder
+		std::replace(replaced.begin(), replaced.end(), '\x1A', '\\');
+
+		// 10) Collapse repeated spaces (and tabs) to a single space
+		replaced = std::regex_replace(
+					replaced,
+					std::regex(R"([ \t]+)"),
+					" "
+					);
+
+		// 11) Trim leading/trailing whitespace
+		auto is_space = [](unsigned char ch) { return std::isspace(ch) != 0; };
+
+		auto it_begin = std::find_if_not(replaced.begin(), replaced.end(), is_space);
+		auto it_end   = std::find_if_not(replaced.rbegin(), replaced.rend(), is_space).base();
+
+		if (it_begin < it_end)
+			replaced = std::string(it_begin, it_end);
+		else
+			replaced.clear();
 	}
-	catch (std::exception &ex) {
-		IBK::IBK_Message(IBK::FormatString("Could not replace all regex expressions.\n%1").arg(ex.what()),
-						 IBK::MSG_WARNING);
+	catch (const std::exception &ex) {
+		// Replace this with your own logging if you don't use IBK:
+		IBK::IBK_Message(
+					IBK::FormatString("Could not replace all regex expressions.\n%1").arg(ex.what()),
+					IBK::MSG_WARNING
+					);
 	}
 
 	return replaced;
 }
+
+
+
 
 void DRW_InterfaceImpl::addMText(const DRW_MText& data){
 	Drawing::Text newText;
