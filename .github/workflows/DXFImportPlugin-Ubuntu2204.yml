@@ -15,15 +15,14 @@ on:
 jobs:
   build:
 
-    # Test suite results are created on Ubuntu 22.04, hence we need to use this for testing
     runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: 'true'
-    - name: install qt5
-      run: sudo apt install qtbase5-dev qt5-qmake libqt5svg5-dev libqt5sql5 libqt5sql5-psql
+    - name: install qt6
+      run: sudo apt install qt6-base-dev qt6-svg-dev libgl1-mesa-dev
     - name: link submodule libraries
       working-directory: externals
       run: ./createLinuxSymlinks.sh

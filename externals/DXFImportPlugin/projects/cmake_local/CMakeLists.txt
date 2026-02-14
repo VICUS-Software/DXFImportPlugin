@@ -15,7 +15,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/../../../TiCPP/src
 	${PROJECT_SOURCE_DIR}/../../../libdxfrw/src
 	${PROJECT_SOURCE_DIR}/../../../libdxfrw/src/intern
-	${Qt5Widgets_INCLUDE_DIRS}
+	${Qt6Widgets_INCLUDE_DIRS}
 )
 
 # Collect a list of all source files of the DXFImportPlugin library
@@ -32,9 +32,9 @@ if (MSVC)
 endif()
 
 # Run uic and moc compilers
-qt5_add_resources(LIB_RC_SRCS ${LIB_QRCS})
-qt5_wrap_ui(LIB_UI_SRCS ${LIB_UIS})
-qt5_wrap_cpp(LIB_MOC_SRCS ${LIB_HDRS})
+qt6_add_resources(LIB_RC_SRCS ${LIB_QRCS})
+qt6_wrap_ui(LIB_UI_SRCS ${LIB_UIS})
+qt6_wrap_cpp(LIB_MOC_SRCS ${LIB_HDRS})
 
 # Build the library
 add_library(DXFImportPlugin SHARED
@@ -49,13 +49,13 @@ add_library(DXFImportPlugin SHARED
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
 # generate list of all required QT_LIBRARIES
-set ( QT_LIBRARIES 
-	Qt5::Widgets
-	Qt5::PrintSupport
-	Qt5::Svg
-	Qt5::Xml
-	Qt5::Network
-	Qt5::Concurrent
+set ( QT_LIBRARIES
+	Qt6::Widgets
+	Qt6::PrintSupport
+	Qt6::Svg
+	Qt6::Xml
+	Qt6::Network
+	Qt6::Concurrent
 )
 
 # Create a list for the libraries

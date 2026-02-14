@@ -1,7 +1,7 @@
 # CMakeLists.txt file for DXFImportPlugin and dependent libraries
 
 # Require a fairly recent cmake version
-cmake_minimum_required( VERSION 2.8...3.10 )
+cmake_minimum_required( VERSION 3.16 )
 
 # The project name
 project( DXFImportPlugin )
@@ -64,12 +64,12 @@ else (MSVC)
 	if (APPLE)
 		#message( STATUS "Mac compiler ID = ${CMAKE_C_COMPILER_ID}" )
 		if ( CMAKE_C_COMPILER_ID MATCHES "GNU")
-			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17" )
 		else ( CMAKE_C_COMPILER_ID MATCHES "GNU")
-			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++" )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -stdlib=libc++" )
 		endif ( CMAKE_C_COMPILER_ID MATCHES "GNU")
 	else (APPLE)
-		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -std=gnu++11" )
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17" )
 	endif (APPLE)
 
 endif (MSVC)
@@ -83,17 +83,12 @@ endif (MSVC)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if (DISABLE_QT)
-	message("*** Building without Qt5 ***")
+	message("*** Building without Qt6 ***")
 else (DISABLE_QT)
-	find_package(Qt5Widgets REQUIRED)
-	find_package(Qt5Xml REQUIRED)
-	find_package(Qt5Svg REQUIRED)
-	find_package(Qt5PrintSupport REQUIRED)
-	find_package(Qt5Network REQUIRED)
-	find_package(Qt5Concurrent REQUIRED)
+	find_package(Qt6 REQUIRED COMPONENTS Widgets Xml Svg PrintSupport Network Concurrent)
 
-	message("*** Building with Qt5, Version ${Qt5Widgets_VERSION} ***")
-	
+	message("*** Building with Qt6, Version ${Qt6Widgets_VERSION} ***")
+
 	# we need OpenGL
 	find_package( OpenGL REQUIRED )
 

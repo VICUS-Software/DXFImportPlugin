@@ -1,7 +1,7 @@
 @echo off
 
-set QTDIR=C:\Qt\Qt5.11.3\5.15.2\msvc2019_64
-set PATH=C:\Qt\Qt5.11.3\5.15.2\msvc2019_64\bin;%PATH%
+set QTDIR=C:\Qt\6.8.0\msvc2022_64
+set PATH=C:\Qt\6.8.0\msvc2022_64\bin;%PATH%
 
 :: setup VC environment variables
 set VCVARSALL_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
@@ -19,7 +19,7 @@ if not defined JOM_PATH (
 	set JOM_PATH=c:\Qt\Tools\QtCreator\bin
 )
 if not defined CMAKE_PREFIX_PATH (
-	set CMAKE_PREFIX_PATH=c:\Qt\5.11.3\msvc2015_64
+	set CMAKE_PREFIX_PATH=c:\Qt\6.8.0\msvc2022_64
 )
 
 :: add search path for jom.exe
