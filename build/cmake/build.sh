@@ -9,12 +9,6 @@
 #   [verbose]					enable cmake to call verbose makefiles
 #   []
 
-# path export for mac
-export PATH=~/Qt/6.8.0/gcc_64/bin:~/Qt/6.8.0/clang_64/bin:$PATH
-
-# for MacOS, brew install of Qt 6 ("brew install qt")
-export CMAKE_PREFIX_PATH=/usr/local/opt/qt/
-
 CMAKELISTSDIR=$(pwd)
 BUILDDIR="bb"
 

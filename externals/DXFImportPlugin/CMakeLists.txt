@@ -4,28 +4,28 @@ project(DXFImportPlugin)
 
 # Add include directories
 include_directories(	
-	${PROJECT_SOURCE_DIR}/../../src			# Needed so that ui-generated header files find our own headers
-	${PROJECT_SOURCE_DIR}/../../../IBK/src
-	${PROJECT_SOURCE_DIR}/../../../IBKMK/src
-	${PROJECT_SOURCE_DIR}/../../../QtExt/src
-	${PROJECT_SOURCE_DIR}/../../../TiCPP/src
-	${PROJECT_SOURCE_DIR}/../../../glm/src
-	${PROJECT_SOURCE_DIR}/../../../glm/src/glm 
-	${PROJECT_SOURCE_DIR}/../../../glm/src/gtx
-	${PROJECT_SOURCE_DIR}/../../../TiCPP/src
-	${PROJECT_SOURCE_DIR}/../../../libdxfrw/src
-	${PROJECT_SOURCE_DIR}/../../../libdxfrw/src/intern
-	${Qt6Widgets_INCLUDE_DIRS}
+	${PROJECT_SOURCE_DIR}/src			# Needed so that ui-generated header files find our own headers
+	${PROJECT_SOURCE_DIR}/../IBK/src
+	${PROJECT_SOURCE_DIR}/../IBKMK/src
+	${PROJECT_SOURCE_DIR}/../QtExt/src
+	${PROJECT_SOURCE_DIR}/../TiCPP/src
+	${PROJECT_SOURCE_DIR}/../glm/src
+	${PROJECT_SOURCE_DIR}/../glm/src/glm 
+	${PROJECT_SOURCE_DIR}/../glm/src/gtx
+	${PROJECT_SOURCE_DIR}/../TiCPP/src
+	${PROJECT_SOURCE_DIR}/../libdxfrw/src
+	${PROJECT_SOURCE_DIR}/../libdxfrw/src/intern
+	${Qt5Widgets_INCLUDE_DIRS}
 )
 
 # Collect a list of all source files of the DXFImportPlugin library
-file(GLOB LIB_SRCS ${PROJECT_SOURCE_DIR}/../../src/*.cpp)
+file(GLOB LIB_SRCS ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 # Collect a list of all header files of the DXFImportPlugin library
-file(GLOB LIB_HDRS ${PROJECT_SOURCE_DIR}/../../src/*.h)
+file(GLOB LIB_HDRS ${PROJECT_SOURCE_DIR}/src/*.h)
 
 # Collect a list of all form files of the DXFImportPlugin library
-file(GLOB LIB_UIS ${PROJECT_SOURCE_DIR}/../../src/*.ui)
+file(GLOB LIB_UIS ${PROJECT_SOURCE_DIR}/src/*.ui)
     
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj ")

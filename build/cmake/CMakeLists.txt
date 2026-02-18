@@ -111,23 +111,23 @@ endif( APPLE )
 # -------------------------------------------------------------
 # Support for build flags
 # -------------------------------------------------------------
-include( ../../externals/IBK/projects/cmake_local/cmake_pri/CMakeLists.txt  )
+include( ../../externals/IBK/CMakeLists.pri  )
 
 # -------------------------------------------------------------
 # subdirectories and subprojects
 # -------------------------------------------------------------
 
 # add subdirectories for all builds
-add_subdirectory( ../../externals/IBKMK/projects/cmake_local IBKMK )
-add_subdirectory( ../../externals/libdxfrw/projects/cmake_local libdxfrw )
-add_subdirectory( ../../externals/TiCPP/projects/cmake_local TiCPP )
-add_subdirectory( ../../externals/IBK/projects/cmake_local IBK )
-add_subdirectory( ../../externals/glm/projects/cmake_local glm )
+add_subdirectory( ../../externals/IBKMK IBKMK )
+add_subdirectory( ../../externals/libdxfrw libdxfrw )
+add_subdirectory( ../../externals/TiCPP TiCPP )
+add_subdirectory( ../../externals/IBK IBK )
+add_subdirectory( ../../externals/glm glm )
 
 if (NOT DISABLE_QT)
 	message("*** Building Qt-based libs ***")	
-	add_subdirectory( ../../externals/QtExt/projects/cmake_local QtExt )
-	add_subdirectory( ../../externals/DXFImportPlugin/projects/cmake_local DXFImportPlugin )
+	add_subdirectory( ../../externals/QtExt QtExt )
+	add_subdirectory( ../../externals/DXFImportPlugin DXFImportPlugin )
 
     add_dependencies( DXFImportPlugin IBK IBKMK QtExt libdxfrw TiCPP glm )
 

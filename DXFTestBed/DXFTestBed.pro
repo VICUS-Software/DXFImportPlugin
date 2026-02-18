@@ -8,7 +8,7 @@ TEMPLATE = app
 
 # this pri must be sourced from all our libraries,
 # it contains all functions defined for casual libraries
-#include( ../../../externals/IBK/projects/Qt/IBK.pri )
+#include( ../externals/IBK/projects/Qt/IBK.pri )
 
 QT       += core gui
 
@@ -28,11 +28,11 @@ DIR_PREFIX =
 
 CONFIG(debug, debug|release) {
 OBJECTS_DIR = debug$${DIR_PREFIX}
-DESTDIR = ../../../bin/debug$${DIR_PREFIX}
+DESTDIR = ../bin/debug$${DIR_PREFIX}
 }
 else {
 OBJECTS_DIR = release$${DIR_PREFIX}
-DESTDIR = ../../../bin/release$${DIR_PREFIX}
+DESTDIR = ../bin/release$${DIR_PREFIX}
 }
 
 MOC_DIR = moc
@@ -52,7 +52,7 @@ QMAKE_CXXFLAGS += -std=c++11
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-LIBS += -L../../../externals/lib_x64
+LIBS += -L../externals/lib_x64
 
 LIBS += \
 -lTiCPP \
@@ -62,32 +62,32 @@ LIBS += \
 -lDXFImportPlugin
 
 INCLUDEPATH = \
-../../src \
-../../../externals/DXFImportPlugin/src \
-../../../externals/TiCPP/src \
-../../../externals/IBKMK/src \
-../../../externals/IBK/src \
-../../../externals/libdxfrw/src \
-../../../externals/libdxfrw/src/intern \
-../../../externals/glm/src \
-../../../externals/glm/src\glm \
-../../../externals/glm/src\gtx \
-../../../externals/QtExt/src
+src \
+../externals/DXFImportPlugin/src \
+../externals/TiCPP/src \
+../externals/IBKMK/src \
+../externals/IBK/src \
+../externals/libdxfrw/src \
+../externals/libdxfrw/src/intern \
+../externals/glm/src \
+../externals/glm/src\glm \
+../externals/glm/src\gtx \
+../externals/QtExt/src
 
 
 
 DEPENDPATH = $${INCLUDEPATH}
 
 SOURCES += \
-../../src/main.cpp \
-../../src/mainwindow.cpp
+src/main.cpp \
+src/mainwindow.cpp
 
 HEADERS += \
-../../src/mainwindow.h
+src/mainwindow.h
 
 FORMS += \
-../../src/mainwindow.ui
+src/mainwindow.ui
 
-#TRANSLATIONS += ../../resources/translations/IFC2BESTest_de.ts
+#TRANSLATIONS += resources/translations/IFC2BESTest_de.ts
 CODECFORSRC = UTF-8
 
