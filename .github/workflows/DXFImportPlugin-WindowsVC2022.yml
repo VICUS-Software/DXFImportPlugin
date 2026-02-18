@@ -51,10 +51,14 @@ jobs:
     - name: build
       working-directory: build/cmake/
       shell: cmd
-      run: build_VC_x64.bat release
-  
+      run: |
+        mkdir bb_VC_x64
+        cd bb_VC_x64
+        cmake -G "NMake Makefiles JOM" .. -DCMAKE_BUILD_TYPE:String="Release"
+        jom
+
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v4
       with:
         name: DXFImportPlugin_win64
-        path: bin\release_x64\*.dll
+        path: build\cmake\bb_VC_x64\DXFImportPlugin\DXFImportPlugin.dll

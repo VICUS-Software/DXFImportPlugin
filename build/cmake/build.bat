@@ -51,61 +51,32 @@ if %VC_FOUND%==0 (
 	exit /b 1
 )
 
-:: Select Qt version
-set QT_ROOT=C:\Qt\6.9.3\msvc2022_64
-
-:: Wichtig für find_package(Qt6 ...)
-set CMAKE_PREFIX_PATH=%QT_ROOT%;%VCPKG_ROOT%\installed\x64-windows
-set Qt6_DIR=%QT_ROOT%\lib\cmake\Qt6
-
-:: Check if zlib is installed via vcpkg, if not install it
-set VCPKG_ROOT=C:\vcpkg
-if not exist "%VCPKG_ROOT%\installed\x64-windows\lib\zlib.lib" (
-    echo zlib not found, installing via vcpkg...
-    call "%~dp0setup_zlib_vcpkg.bat"
-    if ERRORLEVEL 1 (
-        echo ERROR: Failed to setup zlib
-        exit /b 1
-    )
-)
-
 :: These environment variables can also be set externally
 if not defined JOM_PATH (
 	set JOM_PATH=c:\Qt\Tools\QtCreator\bin\jom
 )
 
-:: Parse arguments for deploy flag
-for %%a in (%*) do (
-	if /i "%%a"=="deploy" (
-		set CMAKE_OPTIONS=%CMAKE_OPTIONS% -DIBK_DEPLOYMENT:BOOL=ON
-		echo Deployment build mode enabled
-	)
-)
-
 :: add search path for jom.exe
 set PATH=%PATH%;%JOM_PATH%
 
-set BUILD_DIR=bb_VC_2022_Qt6_x64
+set BUILD_DIR=bb_VC_x64
 :: create and change into build subdir
-mkdir %BUILD_DIR%
+mkdir %BUILD_DIR% 2>nul
 pushd %BUILD_DIR%
 
 :: configure makefiles and build
-cmake -G "NMake Makefiles JOM" ../../.. %CMAKE_OPTIONS% -DCMAKE_BUILD_TYPE:String="Release" -DUSE_OMP:BOOL=ON -DVICUS_QT_VERSION:STRING=6 -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake
-jom 
+cmake -G "NMake Makefiles JOM" .. -DCMAKE_BUILD_TYPE:String="Release"
+jom
 if ERRORLEVEL 1 GOTO fail
 
 popd
 
-:: copy executable to bin/release dir
-xcopy /Y .\%BUILD_DIR%\View3D\View3D.exe ..\..\bin\release_x64
-xcopy /Y .\%BUILD_DIR%\NandradSolver\NandradSolver.exe ..\..\bin\release_x64
-xcopy /Y .\%BUILD_DIR%\SIM-VICUS\SIM-VICUS.exe ..\..\bin\release_x64
-xcopy /Y .\%BUILD_DIR%\NandradSolverFMI\NandradSolverFMI.dll ..\..\bin\release_x64
+:: copy plugin to bin/release dir
+mkdir ..\..\bin\release 2>nul
+xcopy /Y .\%BUILD_DIR%\DXFImportPlugin\DXFImportPlugin.dll ..\..\bin\release\
 
 exit /b 0
 
 :fail
 echo ** Build Failed **
 exit /b 1
-
