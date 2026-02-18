@@ -85,6 +85,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 if (DISABLE_QT)
 	message("*** Building without Qt6 ***")
 else (DISABLE_QT)
+	set(VICUS_QT_VERSION 6)
 	find_package(Qt6 REQUIRED COMPONENTS Widgets Xml Svg PrintSupport Network Concurrent)
 
 	message("*** Building with Qt6, Version ${Qt6Widgets_VERSION} ***")
