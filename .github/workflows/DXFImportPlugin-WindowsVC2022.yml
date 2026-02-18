@@ -1,9 +1,6 @@
 name: Windows DxfImportPlugin Complete
 
 on:
-  # run nightly at 4:00 am
-#  schedule:
-#    - cron: "0 4 * * *"
   # allow to be triggered on github webpage manually
   workflow_dispatch:
   # run whenever someone pushes data
@@ -21,29 +18,23 @@ jobs:
     steps:
     - name: install jom
       run: choco install jom -y
-   
+
     - name: Install Visual Studio Build Tools
       uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
         arch: x64
-   
+
     - name: install qt6
-      uses: jurplel/install-qt-action@v4.0.0
+      uses: jurplel/install-qt-action@v4
       with:
         version: '6.9.2'
         host: 'windows'
         target: 'desktop'
-        install-deps: 'true'
         arch: win64_msvc2022_64
         archives: 'qtbase qtsvg'
-        cache: 'false'
-        cache-key-prefix: 'install-qt-action'
+        cache: 'true'
         set-env: 'true'
-        tools-only: 'false'
-        aqtversion: '==3.1.*'
-        py7zrversion: '==0.20.*'
-        extra: '--external 7z'
-  
+
     - uses: actions/checkout@v4
       with:
         submodules: 'true'
@@ -52,7 +43,7 @@ jobs:
       working-directory: build/cmake/
       shell: cmd
       run: build_VC_x64.bat release
-  
+
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v4
       with:
