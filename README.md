@@ -4,7 +4,6 @@ A Qt-based plugin for importing DXF (AutoCAD Drawing Exchange Format) files into
 
 ## Build Status
 
-[![Ubuntu 22.04](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2204.yml/badge.svg)](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2204.yml)
 [![Ubuntu 24.04](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2404.yml/badge.svg)](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2404.yml)
 [![Windows VC2022](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-WindowsVC2022.yml/badge.svg)](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-WindowsVC2022.yml)
 
