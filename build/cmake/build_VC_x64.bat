@@ -1,33 +1,23 @@
 @echo off
 
-set QTDIR=C:\Qt\6.8.0\msvc2022_64
-set PATH=C:\Qt\6.8.0\msvc2022_64\bin;%PATH%
+:: Build script for CI (GitHub Actions) and local use.
+:: In CI, VC and Qt environment are set up by actions.
+:: For local use, set JOM_PATH and CMAKE_PREFIX_PATH, or let the defaults apply.
 
-:: setup VC environment variables
-set VCVARSALL_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-call %VCVARSALL_PATH%
-
-:: For different Qt installations, please set the environment variables JOM_PATH and CMAKE_PREFIX_PATH
-:: for the current Windows user. Also, make sure cmake is in the PATH variable.
-:: Mind: the dlls in the release/win/VC14_xxx subdirectories must match the Qt version for building.
-::       You must copy the Qt dlls used for building into these directories.
-::
-:: For debugging crashes on Windows, change the CMAKE_BUILD_TYPE to "RelWithDebInfo".
+setlocal
 
 :: These environment variables can also be set externally
 if not defined JOM_PATH (
-	set JOM_PATH=c:\Qt\Tools\QtCreator\bin
-)
-if not defined CMAKE_PREFIX_PATH (
-	set CMAKE_PREFIX_PATH=c:\Qt\6.8.0\msvc2022_64
+	set JOM_PATH=c:\Qt\Tools\QtCreator\bin\jom
 )
 
 :: add search path for jom.exe
 set PATH=%PATH%;%JOM_PATH%
 
+set BUILD_DIR=bb_VC_x64
 :: create and change into build subdir
-mkdir bb_VC_x64
-pushd bb_VC_x64
+mkdir %BUILD_DIR% 2>nul
+pushd %BUILD_DIR%
 
 :: configure makefiles and build
 cmake -G "NMake Makefiles JOM" .. -DCMAKE_BUILD_TYPE:String="Release"
@@ -36,13 +26,12 @@ if ERRORLEVEL 1 GOTO fail
 
 popd
 
-:: copy executable to bin/release dir
-xcopy /Y .\bb_VC_x64\DxfImportPlugin\DxfImportPlugin.dll ..\..\bin\release_x64
+:: copy plugin to bin/release_x64 dir
+mkdir ..\..\bin\release_x64 2>nul
+xcopy /Y .\%BUILD_DIR%\DXFImportPlugin\DXFImportPlugin.dll ..\..\bin\release_x64\
 
 exit /b 0
-
 
 :fail
 echo ** Build Failed **
 exit /b 1
-
