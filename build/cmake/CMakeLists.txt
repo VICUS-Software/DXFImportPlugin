@@ -53,8 +53,8 @@ endif (NOT CMAKE_BUILD_TYPE)
 
 if (MSVC)
 
-	# add VC compiler-specific flags (NONMINMAX define and disable "unsafe" warnings)
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D\"NOMINMAX\" /wd4996" )
+	# add VC compiler-specific flags (NONMINMAX define, disable "unsafe" warnings, Qt6 requires /Zc:__cplusplus)
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D\"NOMINMAX\" /wd4996 /Zc:__cplusplus" )
 
 else (MSVC)
 

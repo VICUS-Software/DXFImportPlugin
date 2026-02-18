@@ -1,13 +1,33 @@
 # DXFImportPlugin
 
-Holds the DXF Import plugin for [VICUS](https://vicus-software.com).
+A Qt-based plugin for importing DXF (AutoCAD Drawing Exchange Format) files into [SIM-VICUS](https://sim-vicus.de), a building and district energy simulation tool.
 
-## Build status
+## Build Status
 
-[![Ubuntu 20.04 DXFImportPlugin](https://github.com/Labauke/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2004.yml/badge.svg)](https://github.com/Labauke/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2004.yml)
+[![Ubuntu 22.04](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2204.yml/badge.svg)](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2204.yml)
+[![Ubuntu 24.04](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2404.yml/badge.svg)](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2404.yml)
+[![Windows VC2022](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-WindowsVC2022.yml/badge.svg)](https://github.com/VICUS-Software/DXFImportPlugin/actions/workflows/DXFImportPlugin-WindowsVC2022.yml)
 
-[![Ubuntu 22.24 DXFImportPlugin](https://github.com/Labauke/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2204.yml/badge.svg)](https://github.com/Labauke/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2204.yml)
+## Building
 
-[![Ubuntu 24.04 DXFImportPlugin](https://github.com/Labauke/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2404.yml/badge.svg)](https://github.com/Labauke/DXFImportPlugin/actions/workflows/DXFImportPlugin-Ubuntu2404.yml)
+Requires Qt6 (Widgets, Xml, Svg, PrintSupport, Network, Concurrent) and CMake 3.16+.
 
-[![Windows VC2019 DxfImportPlugin Complete](https://github.com/Labauke/DXFImportPlugin/actions/workflows/DXFImportPlugin-WindowsVC2019.yml/badge.svg)](https://github.com/Labauke/DXFImportPlugin/actions/workflows/DXFImportPlugin-WindowsVC2019.yml)
+### Linux
+
+```bash
+cd build/cmake
+./build.sh release
+```
+
+### Windows (Visual Studio 2022)
+
+```bat
+cd build\cmake
+build.bat
+```
+
+The output shared library (`libDXFImportPlugin.so` / `DXFImportPlugin.dll`) is copied to `bin/release/`.
+
+## License
+
+GPL 3.0 — see [LICENSE](LICENSE) for details.
