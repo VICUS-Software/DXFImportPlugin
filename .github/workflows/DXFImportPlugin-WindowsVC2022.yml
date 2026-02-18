@@ -21,14 +21,16 @@ jobs:
     steps:
     - name: install jom
       run: choco install jom -y
+   
     - name: Install Visual Studio Build Tools
       uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
         arch: x64
+   
     - name: install qt6
       uses: jurplel/install-qt-action@v4.0.0
       with:
-        version: '6.8.*'
+        version: '6.9.2'
         host: 'windows'
         target: 'desktop'
         install-deps: 'true'
@@ -41,17 +43,16 @@ jobs:
         aqtversion: '==3.1.*'
         py7zrversion: '==0.20.*'
         extra: '--external 7z'
+  
     - uses: actions/checkout@v4
       with:
         submodules: 'true'
-    - name: create symlinks of submodules
-      working-directory: externals
-      shell: cmd
-      run: createWindowsSoftlinks.bat
+
     - name: build
       working-directory: build/cmake/
       shell: cmd
       run: build_VC_x64.bat release
+  
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v4
       with:
